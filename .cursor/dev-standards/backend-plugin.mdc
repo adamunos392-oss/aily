@@ -4,6 +4,6 @@ description: Cursor 后端插件规范适配器。
 
 读取并严格执行：
 
-`harness-core/dev-standards/backend-plugin.md`
+- `harness-core/specification/default/backend/plugin.md`（原 dev-standards/backend-plugin.md 整体迁入；外部服务安全红线在 shared/security.md）
 
-核心规则只允许维护在 `harness-core/dev-standards/backend-plugin.md`。
+核心规则只允许维护在 `harness-core/specification/` 下。

@@ -16,7 +16,7 @@
 3. 读取 `.sdd/tasks.json` 中该任务的 `rules_files` 字段列出的所有规范文件，**严格遵守**其中的开发规则
    - `rules_files` 中的 `dev-standards/...` 必须解析为 `harness-core/dev-standards/...`
    - 不要去项目目录或 `.cursor/` 下寻找规则副本
-4. 读取 `docs/api-contracts.md`，确保接口实现符合契约
+4. 根据任务的 `source_feature` 读取对应 `docs/features/<feature-id>/spec.md` 和 `plan.md`，再读取 `docs/data-model.md`、`docs/api-contracts.md`，确保实现没有越过 Feature 边界且符合数据/API 契约
 5. 如果任务的 `externalServices` 非空，读取 `.sdd/tasks.json` 顶层 `external_services` 和 `docs/Plan.md` 的「外部服务与测试权限清单」，确认配置字段、降级策略和 Tester 联调权限
 6. **前端任务：读取高保真原型文件（必须）**
    - 前端任务（type = `frontend` 或 `integration`）必须读取 `docs/prototypes/` 下的高保真原型文件（`.pen`、`.excalidraw`、`.fig` 等）
@@ -49,7 +49,7 @@
 **禁止出现真实敏感值的文件范围包括但不限于：**
 - `docs/**`、`.sdd/**`、`README.md`、`AGENTS.md`
 - `.sdd/T-*-completion*.md`、`.sdd/test-reports/**`、`.sdd/bug-logs/**`、`.sdd/bug_fix/**`、`.sdd/experience.md`
-- `docs/Plan.md`、`docs/PRD.md`、`docs/api-contracts.md`
+- `docs/Plan.md`、`docs/PRD.md`、`docs/feature-map.md`、`docs/domain-model.md`、`docs/data-model.md`、`docs/features/**`、`docs/api-contracts.md`
 - `*.md`、`*.json`、测试报告、完成报告、经验记录、任务状态、日志摘要
 
 如需说明配置，写成 `BAILIAN_API_KEY：已配置于 backend/.env` 或 `LLM_API_KEY：字段存在，未打印值`。禁止写 `sk-...`、`Bearer ...`、真实 token 片段、真实密码片段。
@@ -113,7 +113,7 @@
    - [ ] 运行 pytest 后，真实 SQLite 业务库中的核心表和 seed 用户仍存在，未被测试夹具污染
    - [ ] 涉及 `backend/src/main.py`、`backend/src/db/session.py`、`backend/src/db/models.py`、`backend/scripts/*.py` 或 SQLite 配置 → 已执行真实路径验证：`cd backend && PYTHONPATH=.. python3.11 scripts/init_db.py`（如项目有该脚本）以及短时启动 `cd backend && PYTHONPATH=.. python3.11 -m uvicorn src.main:app --host 127.0.0.1 --port <free-port>`
    - [ ] 涉及 SQLite → 数据库路径已解析为绝对路径并创建父目录；已确认真实数据库文件中目标表和 seed 数据落盘，不能只依赖测试夹具
-   - [ ] 涉及数据库字段 → 对照 `docs/PRD.md` 第7章数据契约核对字段名、类型、约束
+   - [ ] 涉及数据库字段 → 对照 `docs/data-model.md` 核对字段名、类型、约束及 Feature/AC 来源
    - [ ] 涉及认证/鉴权/权限 → 默认实现路由级依赖（如 `get_current_user`、`require_admin` + `Depends(...)`），不强行注册全局认证中间件；`deps.py` 必须从 `src.db.session import get_db` 使用项目数据库会话，不能从 `pycore.integrations.db.session` 导入运行时 DB
    - [ ] 涉及外部服务（百炼等）→ **至少执行1次真实调用**，打印响应结构确认解析逻辑正确（见下方「外部服务真实联调规则」）
    - [ ] 代码无硬编码密钥，配置只从 `.env` / ConfigManager 读取

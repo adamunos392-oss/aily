@@ -6,4 +6,3 @@ max_depth = 1
 core = "harness-core"
 projects_root = "Projects_Repo"
 registry = "project-registry.json"
-commands_dir = ".codex/commands"

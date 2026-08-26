@@ -15,7 +15,7 @@ description: SDD V7_2 Git 工作流 Skill。负责项目 Git 仓库的初始化�
 
 1. **开发启动前**：Developer Agent 开始编码前，检查项目是否已配置 Git 仓库
 2. **功能验收后**：用户确认功能完成，需要提交本次修改时
-3. **项目初始化时**：`/sdd-new-project` 或 `/sdd-init` 创建项目后
+3. **项目初始化时**：`scripts/sdd_project.py new` 创建项目后
 
 ---
 

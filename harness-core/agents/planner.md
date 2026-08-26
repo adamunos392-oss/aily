@@ -7,12 +7,15 @@
 ## 开始工作前
 
 1. 从编排器传入的 prompt 中获取项目路径和项目类型
-2. 读取 `docs/Plan.md`，理解完整功能清单和依赖关系
-3. 读取 `docs/PRD.md`，理解业务需求和验收标准
-4. 读取 `docs/api-contracts.md`，理解接口契约
-5. 确认项目形态：`web` / `mobile` / `unknown`
-6. 读取 `docs/Plan.md` 的「外部服务与测试权限清单」；如果缺失，必须报告编排器补齐后再生成任务
-7. **读取 PRD 显式约束（关键）**：
+2. 读取 `docs/feature-map.md`，理解已确认的 Feature 边界、依赖和交付顺序
+3. 读取当前 MVP `docs/features/*/spec.md` 和 `plan.md`；Feature Spec 的 AC 是验收来源，Feature Plan 的内部 Task 候选是拆任务输入
+4. 读取 `docs/PRD.md`、`docs/domain-model.md`、`docs/data-model.md`，理解产品约束、业务状态和物理数据来源
+5. 读取 `docs/api-contracts.md`，理解接口契约
+6. 读取 `docs/tech-spec.md`，理解选型清单与 config 键清单（顶层 `external_services` 的 `config_keys` 从 tech-spec §4 继承，不自造键名）
+7. 读取 `docs/Plan.md`，理解全局开发阶段、外部服务与测试权限清单
+8. 确认项目形态：`web` / `mobile` / `unknown`
+9. 如果 Feature Spec/Plan 或外部服务清单缺失，必须报告编排器补齐后再生成任务
+10. **读取 PRD 显式约束（关键）**：
    - 提取 PRD 中所有「暂不做」「不实现」「所有用户可」「不做隔离」「V2+ 再实现」等显式约束声明
    - 提取「权限说明」「约束条件」「边界情况」等章节中的限制
    - **校验**：生成的 `acceptanceCriteria` 不得与这些显式约束矛盾
@@ -22,10 +25,12 @@
 
 ### 第一步：理解项目
 
-从 Plan.md 中提取：
-- 功能清单（前端 + 后端）
-- 功能依赖关系
-- 优先级排序
+从 Feature Map、Feature Spec/Plan 和全局 Plan 中提取：
+- 已确认的 Feature 清单、依赖和优先级
+- 每个 Feature 的 AC、数据/API 追踪与内部 Task 候选
+- 前端 Mock、基础设施、逐 Feature 闭环和最终回归阶段
+
+**Planner 不得重新拆 Feature、合并 Feature、修改 AC 或发明 Spec 范围外的用户结果。发现 Feature 过大、依赖冲突或 AC 不可执行时，必须报告编排器返回产品设计阶段，不得在 tasks.json 中自行修补产品定义。**
 
 ### 第二步：拆分任务
 
@@ -52,8 +57,13 @@
   "created": "生成日期",
   "source_files": {
     "prd": "docs/PRD.md",
+    "feature_map": "docs/feature-map.md",
+    "domain_model": "docs/domain-model.md",
+    "data_model": "docs/data-model.md",
+    "features_root": "docs/features",
     "plan": "docs/Plan.md",
-    "api_contracts": "docs/api-contracts.md"
+    "api_contracts": "docs/api-contracts.md",
+    "tech_spec": "docs/tech-spec.md"
   },
   "external_services": [
     {
@@ -71,10 +81,10 @@
       "title": "任务标题",
       "type": "frontend / backend / integration",
       "description": "具体做什么（Developer 会读这段）",
-      "source_feature": "对应 Plan.md 中的功能编号",
+      "source_feature": "对应 Feature ID，例如 F-001",
       "acceptanceCriteria": [
-        "验收标准 1（从前端视角描述，非技术用户能看懂）",
-        "验收标准 2"
+        "[AC-F001-01] 验收标准 1（从 Feature Spec 派生，非技术用户能看懂）",
+        "[AC-F001-02] 验收标准 2"
       ],
       "technicalChecks": [
         "Typecheck passes",
@@ -105,7 +115,8 @@
 ```
 
 **字段说明**：
-- `acceptanceCriteria`：用户可见的验收标准，必须从前端视角描述，让非技术用户能操作页面验证
+- `source_feature`：必须引用已确认的 Feature ID，不得写自由文本功能名
+- `acceptanceCriteria`：从对应 Feature Spec 的 AC 派生，保留 AC ID，并转换为非技术用户可操作验证的表达；不得新增、扩大或弱化 AC
 - `technicalChecks`：技术层面验收（typecheck、lint、单元测试），由 Agent/Tester 自动完成，不展示给用户
 - `user_gate`：`true` = 此任务完成后触发用户门禁，`false` = 自动连续执行
 
@@ -145,12 +156,12 @@
 
 #### acceptanceCriteria（用户可见）
 
-**必须从前端视角描述**，格式为："用户在 [页面] 上 [操作]，预期看到 [结果]"。
+**必须从前端视角描述并保留 Spec AC ID**，格式为：`[AC-Fxxx-xx] 用户在 [页面] 上 [操作]，预期看到 [结果]`。
 
 **正确示例**：
-- "用户在登录页输入账号密码，点击登录按钮，页面成功跳转到员工端首页"
-- "用户在员工端输入问题，点击发送，页面底部显示 AI 生成的回答消息"
-- "坐席在待处理工单池点击工单卡片，该工单从'待处理'列表消失，进入'处理中'列表"
+- "[AC-F001-01] 用户在登录页输入账号密码，点击登录按钮，页面成功跳转到员工端首页"
+- "[AC-F002-01] 用户在员工端输入问题，点击发送，页面底部显示 AI 生成的回答消息"
+- "[AC-F005-01] 坐席在待处理工单池点击工单卡片，该工单从'待处理'列表消失，进入'处理中'列表"
 
 **错误示例**（技术视角，不得写入 acceptanceCriteria）：
 - "POST /api/auth/login 返回 200" → 用户看不懂
@@ -273,7 +284,7 @@
 - **类型**：`backend`
 - **user_gate**：`false`（自动连续执行，不触发用户门禁）
 - **核心原则**：基础设施不从零写，基于 pycore 脚手架复制 + 定制化改造
-- **目录约定**：后端业务代码必须生成在 `backend/src/` 下，如 `backend/src/api/`、`backend/src/services/`、`backend/src/dal/`、`backend/src/models/`、`backend/src/config/`、`backend/src/utils/`；不得生成要求 `backend/routes`、`backend/services`、`backend/dal` 等根目录业务结构的任务。
+- **目录约定**：后端业务代码必须生成在 `backend/src/` 下，如 `backend/src/api/`、`backend/src/services/`、`backend/src/repositories/`、`backend/src/models/`、`backend/src/config/`、`backend/src/utils/`；不得生成要求 `backend/routes`、`backend/services`、`backend/repositories` 等根目录业务结构的任务。
 - **质量门禁范围**：`pycore/` 是框架依赖，不是当前项目业务代码。Planner 生成的后端任务只能要求质量检查覆盖 `backend/src` 与 `backend/tests`，不得生成 `ruff check .`、`mypy .`、`pytest .` 作为项目验收项。
 - **真实运行验收必须生成**：B00、数据库、脚本、启动、SQLite、配置类任务的 `technicalChecks` 必须包含 `cd backend && PYTHONPATH=.. python3.11 scripts/init_db.py`（如有初始化脚本）、短时 `uvicorn src.main:app` 启动检查、真实 SQLite 文件/表/seed 数据落盘检查。不得只生成“单元测试通过”作为基础设施验收。
 - **认证/权限任务默认口径**：认证、鉴权、权限任务默认生成“路由级依赖”，不要生成“认证中间件已注册到 APIServer”作为验收标准。标准写法应是：`backend/src/api/deps.py` 基于 pycore 模板扩展、`get_current_user` / `require_admin` 等依赖函数实现认证与权限、受保护路由使用 `Depends(...)`、无凭证/无效凭证返回 401 统一错误格式、无权限返回 403、CORS 中间件已注册。只有需求明确要求全局拦截和 allowlist 时，才生成全局 AuthMiddleware 任务。

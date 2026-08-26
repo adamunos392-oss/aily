@@ -15,10 +15,11 @@ Harness Router 负责：
 2. 确定当前活动项目 `active_project_id`
 3. 解析 `active_project_path = Projects_Repo/<active_project_id>/`
 4. 判断用户要新建项目、克隆项目、继续项目、产品设计、功能升级、Bugfix 或进入开发
-5. 自动调用 `scripts/sdd_project.py` 和对应 Command / Skill
+5. 自动调用 `scripts/sdd_project.py` 和对应 Skill / Protocol
 6. 保证所有业务文件写入当前活动项目目录
 **7. 执行指令之前，与用户对齐全局系统可使用的python指令（不默认用户系统使用python 或者python3 激活正确版本的python系统）**
-只有当 `docs/PRD.md`、`docs/api-contracts.md`、`***.pen`、`docs/Plan.md` 齐全，与用户对齐了python指令与虚拟环境名称、用户明确开始开发时，才进入智能体开发模式，由 Harness Router调度 Planner / Developer / Tester。
+8. Web 项目原型（阶段 B2）确认后、技术契约（阶段 C）开始前，派出 solution-designer 子智能体产出 `docs/tech-spec.md`（定义见 `harness-core/agents/solution-designer.md`，产物供阶段 C 的 api-contracts 与 Planner 消费）
+只有当产品定义、Feature Map、Domain Model、全部 MVP Feature Spec/Plan、技术方案（tech-spec）、物理数据模型、API 契约、原型和全局 Plan 齐全，与用户对齐了 python 指令与虚拟环境名称、用户明确开始开发时，才进入智能体开发模式，由 Harness Router 调度 Planner / Developer / Tester。
 
 ## Active Project Path 强制规则
 
@@ -44,8 +45,12 @@ active_project_path = Projects_Repo/<active_project_id>/
 
 ```text
 docs/PRD.md                  => <active_project_path>/docs/PRD.md
+docs/feature-map.md          => <active_project_path>/docs/feature-map.md
+docs/domain-model.md         => <active_project_path>/docs/domain-model.md
+docs/data-model.md           => <active_project_path>/docs/data-model.md
 docs/api-contracts.md        => <active_project_path>/docs/api-contracts.md
 docs/Plan.md                 => <active_project_path>/docs/Plan.md
+docs/features/               => <active_project_path>/docs/features/
 docs/prototypes/             => <active_project_path>/docs/prototypes/
 docs/澄清文档/               => <active_project_path>/docs/澄清文档/
 .sdd/tasks.json              => <active_project_path>/.sdd/tasks.json
@@ -85,7 +90,7 @@ active_project_path = Projects_Repo/<id>/
 
 Web 项目可以进入`sdd-product-design`。
 
-移动端项目不得触发 Web 端 `sdd-product-design`，必须先警告：当前系统缺少移动端产品设计规范和移动端开发 rules。用户明确确认继续后，才可在用户自备 PRD / 原型 / API 契约 / Plan 的前提下进入多智能体开发。
+移动端项目不得触发 Web 端 `sdd-product-design`，必须先警告：当前系统缺少移动端产品设计规范和移动端开发 rules。用户明确确认继续后，才可在用户自备产品定义、Feature Spec、原型、数据/API 契约和 Feature/Global Plan 的前提下进入多智能体开发。
 
 ## 文件写入前检查
 

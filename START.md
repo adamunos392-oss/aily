@@ -102,7 +102,7 @@ Projects_Repo/<repo-name>/
 2. 用户描述新增 / 修改功能
 3. 先读取 `.cursor/skills/alignment/SKILL.md`，进行业务场景对齐
 4. 产出并确认 `docs/澄清文档/<feature-name>/01-alignment.md`
-5. 基于确认后的业务口径更新 `docs/PRD.md`、`docs/api-contracts.md`、`docs/Plan.md`
+5. 基于确认后的业务口径更新受影响的 `PRD.md`、Feature Map/Spec、Domain/Data Model、API 契约和 Feature/Global Plan
 6. Planner 只生成新增 / 变更任务
 7. 进入多 Agent 开发
 
@@ -135,14 +135,15 @@ Projects_Repo/<repo-name>/
 
 当前 SDD V7_2 缺少移动端产品设计规范和移动端开发 rules：
 - 不会触发 sdd-product-design Skill
-- 不会自动产出移动端 PRD / 原型图 / api-contracts.md / Plan.md
+- 不会自动产出移动端产品定义 / Feature Spec / 原型图 / 数据与 API 契约 / 开发计划
 - 不会套用 Web 端 Vue 3 / FastAPI/PyCore 的前后端开发规范
 
 如果继续，你需要自行提供：
-1. docs/PRD.md（产品描述、功能范围、页面/流程）
-2. docs/api-contracts.md（API 接口定义、请求/响应格式）
-3. docs/Plan.md（开发计划、任务范围）
-4. 原型图或界面说明（移动端页面结构）
+1. 产品定义与 Feature Map
+2. 每个 MVP Feature 的规格与验收标准
+3. 领域/数据模型与 API 接口契约
+4. Feature 实施计划与全局开发计划
+5. 原型图或界面说明（移动端页面结构）
 
 确认要在“移动端输入材料自备”的前提下，继续进入多 Agent 开发阶段吗？
 ```
@@ -157,8 +158,13 @@ Projects_Repo/<repo-name>/
 
 ```text
 docs/PRD.md
+docs/feature-map.md
+docs/domain-model.md
+docs/data-model.md
 docs/api-contracts.md
 docs/Plan.md
+docs/features/*/spec.md
+docs/features/*/plan.md
 ```
 
 ### 情况 A：Web 空白项目
@@ -178,15 +184,20 @@ docs/Plan.md
 进入产品设计流程：
 
 ```text
-场景对齐（必要时）→ R → A → B1 → B2 → C
+场景对齐（必要时）→ R → A → F → B1 → B2 → C
 ```
 
 产出：
 
 ```text
 docs/PRD.md
+docs/feature-map.md
+docs/domain-model.md
+docs/data-model.md
 docs/api-contracts.md
 docs/Plan.md
+docs/features/<feature-id>/spec.md
+docs/features/<feature-id>/plan.md
 docs/prototypes/
 ```
 
@@ -194,7 +205,7 @@ docs/prototypes/
 
 不得加载 `sdd-product-design` Skill。执行移动端门禁，要求用户补齐 `docs/` 输入材料。
 
-移动端可以使用 `alignment` 做业务场景对齐，但它不能替代移动端 PRD / 原型 / API 契约 / Plan，也不能绕过用户确认门禁。
+移动端可以使用 `alignment` 整理业务场景。进入开发前，用户仍需提供移动端产品定义、Feature Spec、原型、数据/API 契约和开发计划，并完成用户确认门禁。
 
 ### 情况 C：设计文件齐全
 
@@ -227,7 +238,7 @@ docs/澄清文档/<feature-name>/01-alignment.md
 - 只对齐业务目标、范围、场景、验收口径和关键问题
 - 不写数据库、接口字段、组件拆分、开发任务和实施顺序
 - Web 项目：对齐稿确认后可进入 `sdd-product-design`
-- 已有项目功能升级：对齐稿确认后更新 `docs/PRD.md` / `docs/api-contracts.md` / `docs/Plan.md`
+- 已有项目功能升级：对齐稿确认后先更新 Feature Map 和受影响 Feature Spec，再按追踪关系更新 Domain/Data Model、API 契约和 Feature/Global Plan
 - 产品口径型 Bugfix：对齐稿确认后再进入 `sdd-bugfix`
 - 移动端项目：对齐稿只作为业务材料，仍需用户自备移动端输入材料
 
@@ -264,7 +275,8 @@ docs/澄清文档/<feature-name>/01-alignment.md
 2. 取 status=pending 且 priority 最小的任务
 3. 启动 Developer
    - 传入任务 ID
-   - docs/PRD.md
+   - 对应 Feature spec.md / plan.md
+   - docs/domain-model.md / docs/data-model.md
    - docs/api-contracts.md
    - docs/Plan.md
    - .sdd/experience.md
@@ -272,7 +284,7 @@ docs/澄清文档/<feature-name>/01-alignment.md
 4. Developer 返回代码文件路径
 5. 启动 Tester
    - 传入代码路径
-   - acceptanceCriteria
+   - Feature AC / acceptanceCriteria
 6. Tester 返回测试报告路径
 7. PASS → 更新任务状态
 8. FAIL → resume Developer 修复，resume Tester 复验
@@ -329,8 +341,8 @@ memory/harness-experience.md
 
 - START.md
 - agents/
-- commands/
 - skills/
+- protocols/
 - rules/
 - templates/
 

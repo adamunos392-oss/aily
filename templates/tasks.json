@@ -4,6 +4,10 @@
   "created": "",
   "source_files": {
     "prd": "docs/PRD.md",
+    "feature_map": "docs/feature-map.md",
+    "domain_model": "docs/domain-model.md",
+    "data_model": "docs/data-model.md",
+    "features_root": "docs/features",
     "plan": "docs/Plan.md",
     "api_contracts": "docs/api-contracts.md"
   },
@@ -14,11 +18,14 @@
       "title": "",
       "type": "backend",
       "description": "",
-      "source_feature": "",
+      "source_feature": "F-001",
       "acceptanceCriteria": [
-        "",
+        "[AC-F001-01] 用户在对应页面完成操作后看到 Spec 定义的业务结果"
+      ],
+      "technicalChecks": [
         "Typecheck passes",
-        "Lint passes"
+        "Lint passes",
+        "单元测试通过"
       ],
       "frontendIntegration": {
         "required": false,

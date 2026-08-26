@@ -1,10 +1,25 @@
 # 阶段 B1：UI 设计说明书
 
-**在绘制原型图之前，必须先生成设计说明书。**
+**在绘制原型图之前，必须先生成设计说明书。页面和组件必须从已确认的 Feature 与验收标准推导，禁止回到“按页面临时发明功能”的旧路径。**
+
+## 前置条件
+
+进入 B1 前必须读取并确认：
+
+- `docs/PRD.md`
+- `docs/feature-map.md`
+- `docs/domain-model.md`
+- `docs/features/*/spec.md`（全部 MVP Feature 状态为 `Ready`）
+
+任一文件缺失或 Feature Spec 未 Ready，返回阶段 F，不得开始 UI 设计。
 
 ## 流程
 
-1. 根据 PRD.md 列出所有 MVP 界面清单
+1. 根据 `feature-map.md` 和全部 MVP Feature Spec 推导界面清单：
+   - 一个页面可以承载多个 Feature
+   - 一个 Feature 可以跨多个页面或视图
+   - 每个页面必须列出承载的 Feature ID 和 AC ID
+   - PRD 提供产品范围，Feature Spec 提供交互与验收依据
 
 2. **风格调研（使用 ui-ux-pro-max skill）**
 
@@ -42,6 +57,9 @@
    ---
    ## 界面清单
    ### 界面名称：[名称]
+   #### Feature / AC 追踪
+   - Feature：[F-xxx]
+   - Acceptance Criteria：[AC-Fxxx-xx]
    #### 布局结构
    ...
    #### 组件清单
@@ -54,6 +72,11 @@
 
    ```markdown
    ### 界面名称：[名称]
+
+   #### Feature / AC 追踪
+   | Feature | AC | 本界面负责的可观察结果 |
+   |---|---|---|
+   | F-001 | AC-F001-01 | 用户提交有效凭证后进入工作台 |
 
    #### 布局结构
    - 整体布局：[左右分栏 / 上下结构 / 三栏 等]
@@ -74,6 +97,11 @@
 
 5. 输出到：`.sdd/tmp/ui-design-spec.md`（**临时文件**，阶段 B2 原型完成后删除）
 
-6. 发起确认：「UI 设计说明书已完成，请审阅。确认后进入原型设计阶段。」
+6. 完成追踪自检：
+   - 每个 MVP Feature 至少有一个页面、视图或明确的“无 UI”说明
+   - 每条涉及 UI 的 AC 都映射到具体界面和交互
+   - 不得增加 Feature Spec 范围外的新按钮、新角色或新业务结果
+
+7. 发起确认：「UI 设计说明书已完成，请审阅 Feature / AC 与界面的映射。确认后进入原型设计阶段。」
 
 **未经用户确认，不得进入阶段 B2。**

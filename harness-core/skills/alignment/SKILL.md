@@ -1,7 +1,7 @@
 ---
 
 ## name: alignment
-description: SDD V7_2 业务场景对齐 Skill。用于新项目、已有项目功能升级、产品口径不清的 Bugfix，先把用户的大段需求、bug 描述、功能想法整理成无技术方案的业务 PRD 对齐稿，再交给产品设计、技术合同、Planner 或 Bugfix。适用于 /sdd-align、场景对齐、需求对齐、整理业务 PRD、不带技术的 PRD、功能升级前确认产品口径。
+description: SDD V7_2 业务场景对齐 Skill。用于新项目、已有项目功能升级、产品口径不清的 Bugfix，先把用户的大段需求、bug 描述、功能想法整理成无技术方案的业务 PRD 对齐稿，再交给产品设计、技术合同、Planner 或 Bugfix。适用于场景对齐、需求对齐、整理业务 PRD、不带技术的 PRD、功能升级前确认产品口径。
 
 # Scenario Alignment
 
@@ -21,7 +21,7 @@ description: SDD V7_2 业务场景对齐 Skill。用于新项目、已有项目�
 2. 已有项目功能升级，需要先确认新增 / 修改功能的业务口径
 3. Bugfix 涉及产品语义，而不只是纯技术错误
 4. 移动端项目继续开发前，用户需要先整理业务场景，但注意本 Skill 不提供移动端产品设计规范
-5. 用户显式使用 `/sdd-align`、场景对齐、需求对齐、整理业务 PRD、不带技术的 PRD 等表达
+5. 用户显式使用场景对齐、需求对齐、整理业务 PRD、不带技术的 PRD 等表达
 
 ---
 
@@ -56,7 +56,7 @@ description: SDD V7_2 业务场景对齐 Skill。用于新项目、已有项目�
 
 在执行场景对齐前，必须先确认 `active_project_path = Projects_Repo/<active_project_id>/` 已存在，且项目目录内有 `.sdd/project.json`。
 
-如果当前没有活动项目，不得在 alignment 中自动初始化项目；必须返回 Router，让用户先通过 `scripts/sdd_project.py new ...` 或 `sdd-new-project` 创建项目。
+如果当前没有活动项目，不得在 alignment 中自动初始化项目；必须返回 Router，让用户先通过 `scripts/sdd_project.py new ...` 创建项目。
 
 alignment 只负责业务口径对齐，不负责创建项目、初始化 Git、更新 `project-registry.json` 或写基础 Plan。
 
@@ -166,13 +166,13 @@ docs/澄清文档/<feature-name>/01-alignment.md
 - 不要输出大段代码事实清单。
 - 不要把能从代码中查到的问题丢给用户。
 - 不要代替 `sdd-product-design` 生成原型图、API 契约或 Plan。
-- 不要绕过移动端门禁。移动端项目即使完成场景对齐，也仍需要用户自备 PRD / 原型 / API 契约 / Plan。
+- 移动端项目完成场景对齐后，仍需用户自备产品定义、Feature Spec、原型、数据/API 契约和开发计划，并通过移动端门禁。
 
 ---
 
 ## 后续衔接
 
 - 新 Web 项目：场景对齐稿确认后，进入 `sdd-product-design` 的 R 阶段。
-- 已有项目功能升级：场景对齐稿确认后，更新 `docs/PRD.md`、`docs/api-contracts.md`、`docs/Plan.md`，再让 Planner 生成新增 / 变更任务。
+- 已有项目功能升级：场景对齐稿确认后，先识别新增 / 变更 / 失效的 Feature，更新 `docs/feature-map.md` 与受影响 `docs/features/*/spec.md`；再按追踪关系更新 Domain/Data Model、API 契约和 Feature/Global Plan，最后才允许 Planner 生成新增 / 变更任务。
 - 产品口径型 Bugfix：场景对齐稿确认后，再进入 `sdd-bugfix`。
 - 移动端项目：场景对齐稿只能作为业务材料，不能视为移动端开发输入已齐全。

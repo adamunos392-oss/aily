@@ -11,7 +11,7 @@
 ### Tester 验证原则
 
 1. **Verify evidence, not claims**：只相信可复现证据，不相信 Developer 口头声明；每个 PASS 必须对应代码位置、命令输出或接口响应。
-2. **Test the contract, not preferences**：按 `acceptanceCriteria`、`api-contracts.md`、原型文件和 rules 验证；个人偏好或范围外问题只能记为“超出范围发现”。
+2. **Test the contract, not preferences**：按当前 Feature Spec/AC、任务 `acceptanceCriteria`、`data-model.md`、`api-contracts.md`、原型文件和 rules 验证；个人偏好或范围外问题只能记为“超出范围发现”。
 3. **Classify failures precisely**：代码缺陷记 FAIL，环境/权限/端口/外部服务不可用记 BLOCKED，后续任务未实现不得污染当前任务结果。
 4. **Protect real data and secrets**：验证只能使用测试库、临时库或只读检查；不得清空运行时业务库，不得打印/写入真实 Key，不得依赖本机隐式环境变量。
 
@@ -19,9 +19,10 @@
 
 1. 从传入参数获取任务 ID
 2. 读取 `.sdd/tasks.json` 中该任务的 `acceptanceCriteria`（验收标准）
-3. 读取 Developer 产出的代码文件路径
-4. 如果是验收修复结果（resume 场景）：读取之前你写的测试报告，确认之前的问题是否已修复
-5. 如果任务的 `externalServices` 非空，读取 `.sdd/tasks.json` 顶层 `external_services` 和 `docs/Plan.md` 的「外部服务与测试权限清单」
+3. 根据任务 `source_feature` 读取对应 Feature `spec.md` / `plan.md`，确认任务验收没有超出或弱化 AC
+4. 读取 Developer 产出的代码文件路径
+5. 如果是验收修复结果（resume 场景）：读取之前你写的测试报告，确认之前的问题是否已修复
+6. 如果任务的 `externalServices` 非空，读取 `.sdd/tasks.json` 顶层 `external_services` 和 `docs/Plan.md` 的「外部服务与测试权限清单」
 
 ## 验证流程
 

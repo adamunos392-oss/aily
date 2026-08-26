@@ -7,23 +7,23 @@
 - 根入口：`AGENTS.md`
 - Codex 配置：`.codex/config.toml`
 - 子智能体：`.codex/agents/*.toml`
-- Codex 命令提示：`.codex/commands/*.md`
+- 开发循环协议：`harness-core/protocols/development-loop.md`
 
 ## 使用方式
 
 在 Codex 中打开 Harness 根目录后：
 
 1. 先读取 `AGENTS.md`
-2. 再按需读取 `.codex/commands/<command>.md`
-3. 命令文件只会指向 `harness-core/` 的真正规则
+2. 按语义路由进入对应流程（Router 见 `harness-core/router.md`），所有核心规则都在 `harness-core/`
 
 ## 子智能体
 
-当前提供三个薄适配器：
+当前提供四个薄适配器：
 
 - `planner` → `harness-core/agents/planner.md`
 - `developer` → `harness-core/agents/developer.md`
 - `tester` → `harness-core/agents/tester.md`
+- `solution-designer` → `harness-core/agents/solution-designer.md`（产品设计阶段 TS，B2 原型确认后由 Router 派出）
 
 如果当前 Codex 环境不支持自定义 subagent TOML，按 `harness-core/protocols/codex-subagents.md` 在主会话中模拟三角色边界。
 

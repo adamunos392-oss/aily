@@ -8,7 +8,8 @@
 
 ## 开发阶段全局规则
 
-- **Plan.md 是唯一的进度文件**：设计阶段 C 生成，开发阶段维护，前后端共用
+- **产品到开发的追踪链不可跳过**：PRD 需求 → Feature Map → Feature Spec/AC → Domain/Data Model → API Contract → Feature Plan → Task → Test/CI
+- **Plan.md 是唯一的人类可读全局进度文件**：设计阶段 C 生成，开发阶段维护，前后端共用；Feature `plan.md` 只描述实施方案，不记录运行进度，`.sdd/tasks.json` 仅作为机器状态
 - **自动化开发前必须确认外部服务与测试权限**：进入 Planner / Developer / Tester 循环之前，必须先确定项目会引用哪些外部服务，并向用户获取 Tester 完整联调所需的服务 Key、账号、Base URL、回调配置或测试环境权限
 - **先前端，后后端，每阶段经用户门禁确认**：前端全部完成 → Agent/Tester 自动验收通过 → **触发用户门禁，用户确认后才进入后端开发**；用户参与每个阶段的推进决策
 - **Mock 数据对齐 api-contracts.md**：前端 Mock 数据集中存放在 `frontend/src/mocks/`，格式必须与 api-contracts.md 一致
@@ -32,7 +33,7 @@
 
 ## 阶段规范引用
 
-- 产品设计阶段（R/A/B1/B2/C）：由 `sdd-product-design` Skill 驱动（`harness-core/skills/sdd-product-design/`）
+- 产品设计阶段（R/A/F/B1/B2/C）：由 `sdd-product-design` Skill 驱动（`harness-core/skills/sdd-product-design/`）
 - 前端开发：`dev-standards/frontend.md`
 - 后端开发：`dev-standards/backend-dev.md`（总控）+ `dev-standards/backend-layers.md`（分层）+ `dev-standards/backend-plugin.md`（仅 AI Agent 项目）
 

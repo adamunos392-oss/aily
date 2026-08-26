@@ -11,4 +11,4 @@ description: SDD V7_2 Cursor 入口适配器。打开规范包后自动加载 ha
 
 1. `harness-core/router.md`
 
-当用户进入产品设计、功能升级、Bugfix 或开发模式时，必须按 `harness-core/` 下的对应 command / skill / agent 规范执行。
+当用户进入产品设计、功能升级、Bugfix 或开发模式时，必须按 `harness-core/` 下的对应 skill / protocol / agent 规范执行。

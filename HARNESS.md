@@ -5,7 +5,7 @@
 SDD V7_2 分成两个层级：
 
 ```text
-Harness 本体：开发规范、Agent、Skill、Command、Rules、模板、系统经验
+Harness 本体：开发规范、Agent、Skill、Protocol、Rules、模板、系统经验
 项目实例：具体业务代码、设计文档、项目状态、项目经验
 ```
 
@@ -42,6 +42,29 @@ harness-core/
 ```
 
 项目内不得出现 `.codex/`、`.cursor/`、`.claude/` 规则副本，避免规则漂移。
+
+---
+
+## 产品到开发的设计链
+
+Web 项目进入开发前必须形成完整追踪链：
+
+```text
+PRD 产品定义
+→ Feature Map
+→ Domain Model
+→ Feature Spec / Acceptance Criteria
+→ UI 原型
+→ Data Model / API Contracts
+→ Feature Plan / Global Plan
+→ Planner Tasks
+```
+
+- PRD 定义用户、场景、范围和业务规则，不提前锁死物理字段与 API DTO
+- Feature 是业务交付、Tester 验收、CI 追踪和用户门禁单位
+- Feature 以用户结果为单位；页面、接口、数据库表和组件负责承载 Feature 的实现
+- 每个 MVP Feature 必须有 `docs/features/<feature-id>/spec.md` 和 `plan.md`
+- `docs/Plan.md` 维护全局路线图与人类可读进度；Feature `plan.md` 只描述实施方案
 
 ---
 

@@ -19,6 +19,7 @@ Claude Code agent 适配器位于：
 .claude/agents/planner.md
 .claude/agents/developer.md
 .claude/agents/tester.md
+.claude/agents/solution-designer.md
 ```
 
 这些文件只引用：
@@ -29,15 +30,12 @@ harness-core/agents/*.md
 
 不要在 `.claude/agents/` 里维护核心规则。
 
-## Commands
+## 开发循环入口
 
-Claude Code command 适配器位于：
+多智能体开发循环由语义路由触发，无命令层。协议本体位于：
 
 ```text
-.claude/commands/sdd-start.md
-.claude/commands/sdd-bugfix.md
-.claude/commands/sdd-align.md
-.claude/commands/sdd-new-project.md
+harness-core/protocols/development-loop.md
 ```
 
-这些文件只引用 `harness-core/commands/*.md`。
+`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），场景对齐走 `harness-core/skills/alignment/SKILL.md`，Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。

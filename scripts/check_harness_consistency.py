@@ -34,12 +34,11 @@ REQUIRED_PATHS = [
     ROOT / ".codex" / "agents" / "planner.toml",
     ROOT / ".codex" / "agents" / "developer.toml",
     ROOT / ".codex" / "agents" / "tester.toml",
-    ROOT / ".codex" / "commands" / "sdd-new-project.md",
-    ROOT / ".codex" / "commands" / "sdd-align.md",
-    ROOT / ".codex" / "commands" / "sdd-start.md",
-    ROOT / ".codex" / "commands" / "sdd-bugfix.md",
+    ROOT / "harness-core" / "protocols" / "development-loop.md",
     ROOT / "harness-core" / "protocols" / "codex-subagents.md",
     ROOT / "harness-core" / "skills" / "alignment" / "SKILL.md",
+    ROOT / "harness-core" / "skills" / "sdd-product-design" / "phase-F.md",
+    ROOT / ".cursor" / "skills" / "sdd-product-design" / "phase-F.md",
     ROOT / "templates" / "project" / "docs" / "澄清文档",
 ]
 

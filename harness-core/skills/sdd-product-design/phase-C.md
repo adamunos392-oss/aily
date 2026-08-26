@@ -1,186 +1,406 @@
-# 阶段 C：最终 PRD 定稿 + 接口契约 + 开发计划
+# 阶段 C：技术契约、Feature Plan 与全局开发计划
 
-在用户确认原型后，生成最终 PRD 和开发所需文件。内容必须与已确认原型一致。
+阶段 C 必须从已经确认的 Feature Map、Domain Model、Feature Spec 和原型反推技术契约。禁止先按数据库 CRUD 或现有代码结构设计接口，再回头迁就功能。
 
----
+## 前置条件
 
-## C1：定稿 PRD.md
+- `docs/PRD.md` 的产品定义已确认
+- `docs/feature-map.md` 已确认
+- `docs/domain-model.md` 已确认
+- 全部 MVP `docs/features/*/spec.md` 状态为 `Ready`
+- 原型已完成并通过 Feature / AC 追踪检查
+- `docs/tech-spec.md` 已确认（选型 / 接口形态 / config 键已定，产出见 `harness-core/agents/solution-designer.md`）
 
-在阶段 A 已迭代的 PRD.md 基础上，补充以下章节使其成为**完整定稿**：
-- 路线图（版本规划终版）
-- 技术架构蓝图（技术选型、分层、部署方案）
-- 原型说明（原型文件路径、各界面对应关系）
-- 核心流程图（Mermaid：sequenceDiagram 或 flowchart）
-- 组件交互说明（影响模块、拟新增模块、调用关系）
-- 技术选型与风险（关键库/方案、风险与缓解）
+任一条件不满足，返回对应阶段修正。
 
-**不生成 roadmap-final.md、architecture-blueprint.md 等独立文件**——全部合并在 PRD.md 中。
+## 固定产出
 
----
-
-## C2：输出接口契约文件（api-contracts.md）
-
-**必须输出 `docs/api-contracts.md`**，列出每个接口的完整请求/响应格式。
-
-```markdown
-# 接口契约
-
-> 前端 Mock 和后端实现的唯一对齐依据。任何变更必须同步更新本文件。
-
-## 通用约定
-
-### 统一响应格式
-成功：{"code": 200, "message": "success", "data": { ... }}
-错误：{"code": <错误码>, "message": "<错误描述>", "data": null}
-分页：{"code": 200, "data": {"items": [...], "total": 100, "page": 1, "page_size": 20}}
-
----
-
-## 接口清单
-
-### POST /api/auth/login
-
-**请求体：**
-{"username": "string", "password": "string"}
-
-**响应（成功 200）：**
-{"code": 200, "data": {"access_token": "string", "user": {"id": 1, "name": "string"}}}
-
-**响应（失败 401）：**
-{"code": 401, "message": "用户名或密码错误", "data": null}
-
----
-
-（按 PRD 中所有页面涉及的接口逐个列出）
+```text
+docs/
+├── PRD.md
+├── feature-map.md
+├── domain-model.md
+├── tech-spec.md
+├── data-model.md
+├── api-contracts.md
+├── Plan.md
+├── prototypes/
+└── features/
+    └── F-xxx-<slug>/
+        ├── spec.md
+        └── plan.md
 ```
 
-**规则：**
-- 每个接口必须列出：请求方法、路径、请求体（如有）、成功响应、至少一种错误响应
-- 响应格式必须遵守阶段 A6-2 锁定的统一响应格式
-- 字段名、类型、嵌套结构必须明确，禁止用 `...` 或 `TBD` 占位
+## 执行顺序
 
----
-
-## C3：输出开发计划文件（Plan.md）
-
-**必须输出 `docs/Plan.md`**，这是整个开发阶段的主文件。
-
-```markdown
-# 开发计划
-
-> 设计阶段与开发阶段的衔接文件。所有开发进度以本文件为准。
-
-## 一、功能清单总览
-
-| 序号 | 功能名称 | 一句话描述 | 对应页面 | 优先级 | 状态 |
-|------|---------|-----------|---------|--------|------|
-| F01 | ... | ... | ... | MVP | 待开发 |
-
-## 二、数据契约摘要
-
-> 完整数据契约见 PRD.md；接口契约见 api-contracts.md
-
-### 统一响应格式
-- 成功：{"code": 200, "message": "success", "data": { ... }}
-- 错误：{"code": <错误码>, "message": "<错误描述>", "data": null}
-- 分页：{"code": 200, "data": {"items": [...], "total": N, "page": N, "page_size": N}}
-
-## 二点五、外部服务与测试权限清单
-
-> 进入多智能体自动化开发前必须确认。真实 Key / Token / Secret 不写入本文档或任何 `docs/**`、`.sdd/**` 可读产物，只记录字段名、用途和配置状态；真实值只能进入 `.env` 等配置文件。
-
-| 服务 | 用途 | 配置项字段 | MVP 必需 | Tester 完整联调权限 | 缺失时策略 | 状态 |
-|------|------|------------|----------|--------------------|------------|------|
-| 百炼 / OpenAI / 其他 LLM | 意图识别 / 回答生成 | `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | 是/否 | 测试 Key + 可调用额度 | Mock/fallback，仅可标记降级验收 | 待确认 |
-| 向量 / Rerank 服务 | RAG 检索增强 | `EMBEDDING_API_KEY`, `RERANKER_API_KEY` | 是/否 | 测试 Key + 可调用额度 | Mock/fallback，仅可标记降级验收 | 待确认 |
-
-## 三、前端开发清单
-
-| 序号 | 页面名称 | 涉及功能 | Mock 数据来源 | 状态 |
-|------|---------|---------|--------------|------|
-| P01 | ... | ... | api-contracts.md ... | 待开发 |
-
-### 前端自动验收标准
-- [ ] 所有页面 UI 与原型一致
-- [ ] 所有页面使用 Mock 数据可正常交互
-- [ ] Mock 数据格式与 api-contracts.md 完全一致
-- [ ] **Agent/Tester 自动验收通过**
-
-> 前端 Mock 页面完成后触发用户门禁，由用户验收 UI/UX 效果；用户确认后自动进入后端基础设施开发。
-> 前端 Mock 只用于前端 MVP 和接口契约对齐；后端业务任务完成时，必须把对应前端 service/page 切到 `VITE_USE_MOCK=false` 的真实后端联调路径。
-
-## 四、后端开发清单
-
-| 序号 | 功能名称 | 依赖 | 对应接口 | 状态 |
-|------|---------|------|---------|------|
-| B00 | 基础设施 | 无 | GET /health | 待开发 |
-| B01 | ... | B00 | ... | 待开发 |
-
-### 后端任务验收规则
-
-- **基础设施任务基于 pycore 框架**：禁止自己重写 config.py、server.py、logger.py；配置管理使用 `pycore.core.ConfigManager`，服务器使用 `pycore.api.APIServer`，数据库骨架从 `pycore/integrations/db/` 复制模板
-- 基础设施任务由 Agent 自动连续执行，不触发用户门禁；验收标准：ruff/mypy 通过、单元测试通过、`GET /health` 返回 200
-- 对应前端页面或 service 的业务任务：必须在任务内完成真实联调验收，每个功能是一个完整闭环（后端 API + 前端 Mock 切真实）
-- 真实联调验收至少包含：
-  - `VITE_USE_MOCK=false` 时前端调用真实后端 API
-  - 对应页面核心操作可用
-  - 页面不得展示该功能相关 `[Mock]` 数据、Mock 账号提示或 Mock-only 文案
-  - Tester 能证明请求命中真实后端，而不是 `frontend/src/mocks/*`
-- 最终 E2E / 回归阶段只做全系统复查，不承担第一次前后端联调
-- 涉及外部服务的后端任务，必须引用「外部服务与测试权限清单」；如果必要 Key / 权限缺失，只能标记 Mock/fallback 验收，不得宣称真实外部服务联调通过
-
-## 五、功能详情（开发时逐个展开）
-
-> 以下详情在开发阶段由 Developer 和 Tester 逐个展开和验收。
-
----
-
-## 六、开发顺序建议
-
-> 以下顺序是默认推荐节奏，实际开发以 Planner 产出的 tasks.json 为准。
-
-**阶段1：前端 MVP（Mock，用户先验收 UI/UX）**
-1. 所有前端页面（P01 → P02 → P03 → P04）使用 Mock 数据完成
-2. 验收（用户门禁）：用户打开页面，确认布局、配色、交互与原型一致
-
-**阶段2：后端基础设施（自动连续执行，不触发用户门禁）**
-1. 基于 pycore 脚手架初始化项目结构、配置、数据库、中间件
-2. 验收（Agent 自动）：ruff/mypy 通过、单元测试通过、`GET /health` 返回 200
-
-**阶段3：逐功能闭环开发（每个功能完成后触发用户门禁）**
-1. 按业务依赖逐个推进：登录 → 知识库 → 发起咨询 → 转人工 → 坐席接单 → ...
-2. 每个功能 = 后端真实 API + 前端 Mock 切真实 + 联调验收
-3. 验收（用户门禁）：用户从前端页面操作验证功能可用
-
-**阶段4：E2E 回归测试**
-1. 完整流程走通
-2. 验收（用户门禁）：全流程通过，无阻塞性 Bug
+```text
+C1 PRD 最终定稿
+→ C2 从 Feature 数据责任反推 data-model.md
+→ C3 从 Feature 流程与 AC 反推 api-contracts.md
+→ C4 为每个 MVP Feature 生成 plan.md
+→ C5 生成全局 Plan.md
+→ C6 Traceability / Feature Ready 自检
 ```
 
-**Plan.md 维护规则：**
-1. 设计阶段结束时由 Agent 生成初始版本
-2. **禁止**跳过 Plan.md 直接开发
-3. **禁止**在 Plan.md 之外另建进度文件
+---
+
+## C1：PRD 最终定稿
+
+在阶段 A 的产品定义基础上补充：
+
+- 已确认的 Feature Map 摘要和路径
+- 原型说明及 Feature / AC 对应关系
+- 版本路线图终版
+- 产品级技术架构蓝图（只描述系统边界和技术选择，不复制接口或字段；选型值以 `docs/tech-spec.md` 选型清单为权威，PRD 不重复展开）
+- 外部服务选择、风险和降级原则
+- 变更记录
+
+PRD 继续作为产品层事实来源，不承载：
+
+- 物理数据库字段明细
+- API 请求/响应 DTO 明细
+- Feature 内部实施任务
+- 开发运行状态
+
+这些内容分别进入 `data-model.md`、`api-contracts.md`、Feature `plan.md` 和 `.sdd/tasks.json`。
 
 ---
 
-## PRD 自检（生成后必须逐项核对）
+## C2：输出物理数据模型（data-model.md）
 
-- [ ] 没有"待定"、"TBD"、"后续补充"等占位符
-- [ ] 每个功能模块都有明确的优先级（MVP / V2+）
-- [ ] 核心流程图覆盖了主流程和至少一条异常分支
-- [ ] 技术选型已确定，没有"A 或 B 待定"
-- [ ] PRD 内容与已确认的原型一致
-- [ ] PRD.md 包含路线图、架构蓝图、原型说明章节
-- [ ] api-contracts.md 已输出，覆盖所有接口
-- [ ] Plan.md 已输出，包含功能清单、数据契约、前端/后端清单
-- [ ] 外部服务与测试权限清单已输出，覆盖所有需要 Key、账号、Base URL、测试权限或付费资源的依赖
-- [ ] `docs/` 包含 PRD、接口契约、Plan 和原型；`.sdd/` 仅保留状态、任务、经验、日志、报告，无残留草稿
+必须输出 `docs/data-model.md`。
 
-**自检不通过 → 修复后重新输出，不得进入开发。**
+数据模型必须从以下资料反推：
+
+1. `domain-model.md` 中的业务对象、关系和状态机
+2. `feature-map.md` 中的读写关系和数据 Owner
+3. 每个 Feature Spec 的业务数据读写、业务规则和 AC
+4. 原型中已确认的展示、筛选和输入需求
+
+### 固定结构
+
+```markdown
+# 数据模型
+
+> 物理数据结构的唯一事实来源。每个实体和字段必须能追溯到 Feature 或通用基础设施需求。
+
+## 1. 数据设计原则
+
+- 数据库类型：
+- ID 策略：
+- 时间与时区：
+- 软删除 / 归档策略：
+- 审计策略：
+
+## 2. 实体总览
+
+| 实体/表 | 业务对象 | Owner Feature | 读写 Feature | 生命周期 |
+|---|---|---|---|---|
+| tickets | 工单 | F-004 | F-004/F-005/F-006 | 待处理 → 处理中 → 已完成 |
+
+## 3. 实体定义
+
+### tickets
+
+| 字段 | 类型 | 必填 | 默认值 | 业务含义 | 来源 Feature/AC | 约束 |
+|---|---|---|---|---|---|---|
+| conversation_id | integer | 是 | - | 关联原始会话 | F-004 / AC-F004-01 | 同一会话最多一张活动工单 |
+
+## 4. 关系与约束
+
+- 外键关系
+- 唯一约束
+- 状态约束
+- 并发不变量
+
+## 5. 索引与查询依据
+
+| 索引 | 服务查询 | 来源 Feature/AC | 原因 |
+|---|---|---|---|
+
+## 6. 数据迁移与兼容性
+
+- 初始建表
+- 变更策略
+- 回滚边界
+```
+
+### 数据字段规则
+
+- 每个业务字段必须标明来源 Feature 或 AC
+- 只有通用基础设施字段（如 `id`、`created_at`）可以标为 `platform`
+- 没有来源的字段不得加入 MVP 数据模型
+- Feature Spec 的业务语义优先于方便 CRUD 的字段设计
+- Domain Model 变化时，必须重新检查受影响 Feature Spec、API 和测试
 
 ---
 
-## 阶段 C 完成后
+## C3：输出 API 契约（api-contracts.md）
 
-告知用户：「产品设计已完成。你可以在当前对话中说“开始开发”，或使用 `/sdd-start` 进入多 Agent 开发流程。」
+必须输出 `docs/api-contracts.md`。
+
+接口按 Feature 的业务动作组织，不按数据库表机械生成 CRUD。
+
+**tech-spec 消费规则**：接口的技术形态（路由、请求/响应模型、错误码、资源词、路由文件落位）以 `docs/tech-spec.md` §3 接口设计为权威输入，在其基础上补齐 Feature / AC 追踪、鉴权、幂等与数据影响，不推翻重设计；发现 tech-spec 缺陷时报告用户返回阶段 TS 修正，不得在 api-contracts 里绕开另设一套。接口的 `API-Fxxx-xx` 编号沿用 tech-spec 已分配的编号。
+
+### 通用契约先确认
+
+在具体 endpoint 之前确认：
+
+- 统一成功 / 错误响应格式
+- HTTP 状态码原则
+- 分页、排序和筛选约定
+- 鉴权方式
+- 幂等性原则
+- 时间、枚举和空值表示
+- 错误码命名规则
+
+### 每个 endpoint 必须包含
+
+```markdown
+## API-F004-01 转人工
+
+- 来源 Feature：F-004
+- 覆盖 AC：AC-F004-01、AC-F004-02
+- 业务动作：员工把当前咨询转为人工处理
+- Method / Path：POST /api/conversations/{id}/transfer
+- 权限：已登录员工
+- 幂等性：同一会话重复调用不得创建第二张活动工单
+
+### 请求
+
+- Path 参数：
+- Query 参数：
+- Request Body：完整字段、类型、必填与约束
+
+### 成功响应
+
+- HTTP 状态：
+- 完整 JSON Schema / 示例：禁止 `...` 占位
+
+### 失败响应
+
+| 场景 | HTTP 状态 | 业务错误码 | 返回内容 |
+|---|---|---|---|
+
+### 数据影响
+
+- 读取实体：
+- 创建实体：
+- 修改实体：
+- 状态变化：
+```
+
+### 契约规则
+
+- 每个 endpoint 必须引用 Feature ID 和 AC ID
+- 每个 MVP AC 涉及的后端行为必须能找到 endpoint、事件或明确的“无 API”说明
+- 请求 / 响应字段必须来自 `data-model.md` 或明确的派生 DTO
+- 禁止直接暴露内部实体；DTO 字段需要独立说明
+- Mock、前端类型、后端模型和测试都以本文档为契约来源
+- 禁止使用 `...`、`TBD` 或无法判定的占位符
+
+---
+
+## C4：为每个 MVP Feature 生成 plan.md
+
+路径：
+
+```text
+docs/features/F-001-user-login/plan.md
+```
+
+Feature Plan 定义“如何实现已经确认的 Feature Spec”，不得修改用户结果、业务规则和 AC。发现 Spec 不完整时必须返回阶段 F；Plan 不得补写新需求。
+
+### 固定模板
+
+```markdown
+# F-001 用户登录实施计划
+
+## 1. 追踪信息
+
+- Feature：F-001
+- Spec：docs/features/F-001-user-login/spec.md
+- Spec 版本：1
+- 依赖 Feature：无
+- Data Model：docs/data-model.md 相关章节
+- API：API-F001-01、API-F001-02
+- 原型：docs/prototypes/... 对应 Frame
+
+## 2. 实现策略
+
+- 前端实现路径：
+- 后端实现路径：
+- 状态管理：
+- 数据持久化：
+- 外部服务：
+- 权限与安全：
+
+## 3. 影响范围
+
+| 层级 | 预计模块/目录 | 变更目的 | 禁止影响 |
+|---|---|---|---|
+
+## 4. 内部 Task 候选
+
+| Task 候选 | 类型 | 产出 | 依赖 | 覆盖 AC |
+|---|---|---|---|---|
+| 后端认证实现 | backend | API、领域服务、单测 | 基础设施 | AC-F001-01/02 |
+| 前端真实联调 | frontend/integration | service、store、页面 | 后端认证 | AC-F001-01/02 |
+| Feature 测试 | test | API / E2E 测试 | 前后端完成 | 全部 |
+
+> 此表供 Planner 生成 `.sdd/tasks.json`。任务运行状态统一记录在 `.sdd/tasks.json`。
+
+## 5. 开发规范引用
+
+- harness-core/dev-standards/frontend.md
+- harness-core/dev-standards/backend-dev.md
+- harness-core/dev-standards/backend-layers.md
+- AI Agent Feature 按需增加 backend-plugin.md
+
+只引用核心规范，不复制内容。
+
+## 6. AC → 测试映射
+
+| AC | 验证类型 | 测试层级 | 计划测试路径 | 确定性命令 | CI 门禁 |
+|---|---|---|---|---|---|
+| AC-F001-01 | auto | E2E | e2e/features/f001-login.spec.ts | Playwright | required |
+| AC-F001-02 | auto | API | backend/tests/features/f001/test_login.py | Pytest | required |
+
+## 7. 外部服务与测试权限
+
+| 服务 | 配置字段 | Tester 权限 | 缺失时策略 | 可否宣称完整通过 |
+|---|---|---|---|---|
+
+## 8. 风险、迁移与回滚
+
+- 风险：
+- 数据迁移：
+- 向后兼容：
+- 回滚边界：
+
+## 9. Definition of Done
+
+- [ ] Spec 中全部 AC 有验证路径
+- [ ] 物理数据与 API 契约已引用
+- [ ] 内部 Task 候选覆盖完整纵向闭环
+- [ ] 自动化测试路径和 CI 门禁明确
+- [ ] 手工 / Agent / 外部服务验收没有伪装成自动通过
+- [ ] 没有复制 harness-core 开发规范
+```
+
+### Feature Plan 规则
+
+- Feature Plan 记录实施设计；运行进度统一记录在全局 Plan 和 `.sdd/tasks.json`
+- 一个 Feature 可以拆多个内部 Task
+- 内部 Task 可以按前端、后端、测试拆分，但 Feature 只有在完整纵向闭环通过后才能验收
+- Feature Plan 不直接触发子智能体；Planner 在开发入口把它编译为任务状态机
+- Spec 版本变化后，Plan 必须重新检查并更新追踪信息
+
+---
+
+## C5：生成全局 Plan.md
+
+`docs/Plan.md` 是人类可读的项目路线图和进度总览，不展开每个 Feature 的实现细节。
+
+### 固定结构
+
+```markdown
+# 全局开发计划
+
+## 1. Feature 交付总览
+
+| Feature | 用户结果 | 依赖 | Spec | Plan | 优先级 | 状态 |
+|---|---|---|---|---|---|---|
+| F-001 | 用户登录 | 无 | features/F-001/spec.md | features/F-001/plan.md | MVP | Ready |
+
+## 2. 交付依赖图
+
+## 3. 前端 Mock 验收阶段
+
+- 页面 / Feature / AC 映射
+- 原型验收门禁
+- Mock 数据必须符合 API 契约
+
+## 4. 后端基础设施阶段
+
+- 项目结构
+- 配置和数据库
+- 健康检查
+- 通用认证 / 中间件（仅确属跨 Feature 基础设施时）
+
+## 5. 逐 Feature 纵向闭环阶段
+
+| 顺序 | Feature | 完整闭环 | 用户门禁 |
+|---|---|---|---|
+
+## 6. 外部服务与测试权限清单
+
+| 服务 | 用途 | 配置字段 | Tester 权限 | 缺失策略 | 状态 |
+|---|---|---|---|---|---|
+
+## 7. 最终回归与交付
+
+- 跨 Feature E2E
+- 启动文档
+- 部署前检查
+```
+
+### Plan 维护规则
+
+- `docs/Plan.md` 是唯一的人类可读全局进度文件
+- Feature `plan.md` 只描述实施方案，不记录运行进度
+- `.sdd/tasks.json` 是机器执行状态，由开发入口生成
+- 全局 Plan 的 Feature 状态必须与任务状态机同步，不得出现两套冲突事实
+
+---
+
+## C6：Traceability / Feature Ready 自检
+
+### 完整追踪链
+
+每个 MVP 需求必须能够形成：
+
+```text
+PRD 场景 / 业务规则
+→ Feature
+→ Acceptance Criteria
+→ Domain Object / State
+→ Data Field / API Contract
+→ Feature Plan
+→ Planned Test
+→ 后续 Task / CI Result
+```
+
+### 自检清单
+
+- [ ] PRD 没有承载物理字段或 API DTO 明细
+- [ ] tech-spec 的选型与 config 键被 data-model、api-contracts、Plan 一致引用，未另设一套
+- [ ] 每个物理字段都有 Feature/AC 或 platform 来源
+- [ ] 每个 endpoint 都有 Feature/AC 来源
+- [ ] 每个 MVP Feature 都有 Ready Spec 和完整 Plan
+- [ ] 每条 auto AC 都有计划测试层级、路径和命令
+- [ ] manual / agent / external AC 没有被标记为确定性自动通过
+- [ ] Feature Plan 只引用核心开发规范，没有复制规则
+- [ ] 全局 Plan 只维护路线图和总进度
+- [ ] 无 `TBD`、`...`、缺失依赖或循环依赖
+- [ ] 原型、数据模型和 API 没有引入 Spec 范围外的新需求
+
+自检不通过时，返回对应阶段修复，不得进入 Planner / Developer / Tester 开发循环。
+
+## 阶段 C 完成门禁
+
+向用户展示：
+
+- Feature 交付顺序
+- 每个 Feature 的 Spec / Plan 状态
+- 数据与 API 契约追踪结果
+- AC → 测试映射覆盖率
+- 外部服务与降级项
+- 尚需人工判断的 AC
+
+发起：
+
+> 产品定义、Feature 架构、原型、数据模型、API 契约和 Feature Plan 已完成。请审核这些产物；确认后才可以使用 `/sdd-start` 让 Planner 生成任务状态机。
+
+未经用户确认，不得进入开发阶段。

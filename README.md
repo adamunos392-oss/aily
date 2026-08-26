@@ -34,29 +34,27 @@ SDD_V7_2/
 ├── HARNESS.md                       # Harness 使用规范
 ├── project-registry.json            # 项目注册表
 │
-├── harness-core/                    # 唯一真相源：agents / commands / skills / dev-standards / protocols
+├── harness-core/                    # 唯一真相源：agents / skills / dev-standards / protocols / specification
 │   ├── router.md
 │   ├── agents/
-│   ├── commands/
 │   ├── skills/
 │   ├── dev-standards/
-│   └── protocols/
+│   ├── protocols/
+│   └── specification/
 │
-├── .codex/                          # Codex 适配层：subagents TOML + commands + config
+├── .codex/                          # Codex 适配层：subagents TOML + config
 │   ├── config.toml
 │   └── agents/
 │
 ├── .claude/                         # Claude Code 适配层
 │   ├── CLAUDE.md
-│   ├── agents/
-│   └── commands/
+│   └── agents/
 │
 ├── Projects_Repo/                   # 默认项目仓库，所有项目放这里
 │   └── <project-id>/
 │
 ├── .cursor/                         # Cursor 适配层，所有文件只引用 harness-core
 │   ├── agents/
-│   ├── commands/
 │   ├── skills/
 │   ├── dev-standards/
 │   └── rules/
@@ -93,8 +91,16 @@ Projects_Repo/<project-id>/
 │
 ├── docs/
 │   ├── PRD.md
+│   ├── feature-map.md
+│   ├── domain-model.md
+│   ├── tech-spec.md
+│   ├── data-model.md
 │   ├── api-contracts.md
 │   ├── Plan.md
+│   ├── features/
+│   │   └── F-xxx-<slug>/
+│   │       ├── spec.md
+│   │       └── plan.md
 │   └── prototypes/
 │
 ├── frontend/ / mobile/
@@ -125,7 +131,7 @@ Cursor 自动注入 Harness Router
   │   └─ 移动端：警告缺少移动端规范，用户确认后继续，可选业务场景对齐
   │
   ├─ 判断项目状态
-  │   ├─ 缺 PRD / API / Plan → 产品设计或要求用户补齐
+  │   ├─ 缺产品定义 / Feature Spec / 技术方案 / 技术契约 / Plan → 产品设计或要求用户补齐
   │   └─ 文件齐全 → 多 Agent 开发
   │
   └─ Planner → Developer → Tester → Bugfix / Experience
@@ -141,14 +147,13 @@ AGENTS.md
 .codex/README.md
 ```
 
-常用 Codex 命令适配：
+多智能体开发循环由语义路由触发，无命令层，协议本体位于：
 
 ```text
-.codex/commands/sdd-new-project.md
-.codex/commands/sdd-align.md
-.codex/commands/sdd-start.md
-.codex/commands/sdd-bugfix.md
+harness-core/protocols/development-loop.md
 ```
+
+`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），场景对齐走 `harness-core/skills/alignment/SKILL.md`，Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
 
 Codex 子智能体配置：
 
@@ -207,8 +212,26 @@ docs/澄清文档/<feature-name>/01-alignment.md
 
 ### 5. Web / 移动端分流
 
-- Web 项目：可以走产品设计 Skill，自动产出 PRD / 原型 / API 契约 / Plan
-- 移动端项目：当前缺少移动端产品设计和开发 rules，必须警告并等待用户确认；用户需自行提供 PRD / 原型 / API 契约 / Plan
+- Web 项目：可以走产品设计 Skill，按 `产品定义 → Feature Map/Spec → 原型 → 数据/API 契约 → Feature Plan/全局 Plan` 产出设计材料
+- 移动端项目：当前缺少移动端产品设计和开发 rules，必须警告并等待用户确认；用户需自行提供等价的产品定义、功能规格、原型、数据/API 契约和开发计划
+
+### 6. 产品定义与技术契约分层
+
+```text
+PRD 产品定义
+  → Feature Map
+    → Domain Model
+      → Feature Spec / Acceptance Criteria
+        → UI 原型
+          → tech-spec（技术方案：solution-designer 产选型 / 接口形态 / config 键）
+            → Data Model / API Contracts
+              → Feature Plan / Global Plan
+```
+
+- PRD 不提前锁死物理表字段和 API DTO
+- Feature 是业务交付、Tester 验收、CI 追踪和用户门禁单位
+- 页面、接口、数据库表和组件只是 Feature 的实现载体
+- 每个 MVP Feature 必须拥有独立 `spec.md` 和 `plan.md`
 
 ---
 

@@ -61,6 +61,7 @@ def ensure_project_dirs(project_dir: Path) -> None:
         ".sdd/bug_fix",
         ".sdd/tmp",
         "docs",
+        "docs/features",
         "docs/prototypes",
         "docs/澄清文档",
     ]:

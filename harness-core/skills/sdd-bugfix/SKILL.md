@@ -11,13 +11,7 @@ description: SDD V7_2 Bug 修复流程。用于用户验收或开发过程中发
 
 ## 触发场景
 
-当用户使用：
-
-```text
-/sdd-bugfix <问题描述>
-```
-
-或明确要求修复某个 Bug 时，执行本 Skill。
+当用户报告 Bug、要求修复某个 Bug 或描述缺陷现象时，执行本 Skill。
 
 ---
 
@@ -75,11 +69,13 @@ description: SDD V7_2 Bug 修复流程。用于用户验收或开发过程中发
 按顺序读取：
 
 1. `docs/PRD.md`
-2. `docs/api-contracts.md`
-3. `docs/Plan.md`
-4. `.sdd/tasks.json`（如果存在）
-5. `.sdd/experience.md`
-6. 与 Bug 相关的代码文件
+2. `docs/feature-map.md` 与受影响 Feature 的 `spec.md` / `plan.md`
+3. `docs/domain-model.md`、`docs/data-model.md`
+4. `docs/api-contracts.md`
+5. `docs/Plan.md`
+6. `.sdd/tasks.json`（如果存在）
+7. `.sdd/experience.md`
+8. 与 Bug 相关的代码文件
 
 如果 `.sdd/experience.md` 不存在，先从 `templates/experience.md` 创建。
 

@@ -2,8 +2,15 @@
 description: Cursor 前端开发规范适配器。
 ---
 
-读取并严格执行：
+读取并严格执行（原 dev-standards/frontend.md 已拆分为规范集多件）：
 
-`harness-core/dev-standards/frontend.md`
+- `harness-core/specification/default/frontend/tech-stack.md`
+- `harness-core/specification/default/frontend/api-client.md`
+- `harness-core/specification/default/frontend/mock.md`
+- `harness-core/specification/default/frontend/style.md`
+- `harness-core/specification/default/frontend/acceptance.md`
+- `harness-core/specification/default/shared/env-policy.md`
+- `harness-core/specification/default/shared/naming.md`
+- `harness-core/specification/default/shared/security.md`
 
-核心规则只允许维护在 `harness-core/dev-standards/frontend.md`。
+核心规则只允许维护在 `harness-core/specification/` 下。

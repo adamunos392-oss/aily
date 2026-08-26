@@ -2,6 +2,8 @@
 
 **严格按照 ui-design-spec.md 中的描述设计，不得自由发挥。**
 
+原型用于呈现 Feature Spec 的可视化证据。任何新增交互如果改变 Feature 范围、业务规则或 AC，必须返回阶段 F 更新对应 `spec.md` 并重新确认。
+
 ## 设计规范底座（必须加载）
 
 **无论使用 Stitch 还是 Pencil MCP，进入 B2 时必须先加载 UI Design Standard Skill（位于 `harness-core/skills/ui-design-standard/SKILL.md`）作为设计底层规范。**
@@ -110,7 +112,7 @@ docs/prototypes/
 ### 步骤 4：完成收尾
 
 1. 全部界面完成后，删除临时文件 `.sdd/tmp/ui-design-spec.md`
-2. 发起最终确认：「所有界面原型已完成，确认后进入阶段 C。」
+2. 发起最终确认：「所有界面原型已完成，确认后进入技术方案阶段（TS）：派出 solution-designer 子智能体生成 `docs/tech-spec.md`。」
 
 ---
 
@@ -169,17 +171,18 @@ docs/prototypes/
 2. 对关键界面调用 `get_screenshot` 核对
 3. 对照 ui-design-spec.md 的组件清单逐项核对
 4. 确认所有 Frame 坐标不同，且排列清晰
-5. 提醒用户 ⌘+S 保存当前 `.pen` 文件
+5. 对照 `docs/features/*/spec.md` 检查涉及 UI 的 AC 是否都有可见交互证据
+6. 提醒用户 ⌘+S 保存当前 `.pen` 文件
 
 统一确认文案：
 
 ```text
 阶段 B2 原型已完成，共 [N] 个界面。
 我已检查：Frame 不重叠、尺寸一致、组件与说明书一致。
-请保存 .pen 文件到 docs/prototypes/，并确认是否进入阶段 C。
+请保存 .pen 文件到 docs/prototypes/，并确认是否进入技术方案阶段（TS）。
 ```
 
-**未经用户明确确认“进入阶段 C”，不得执行阶段 C。**
+**未经用户明确确认“进入技术方案阶段（TS）”，不得派出 solution-designer。**
 
 ### 完成收尾
 
@@ -196,6 +199,8 @@ docs/prototypes/
 - 对话界面至少 1 轮气泡消息
 - 禁止用 Markdown 文字描述充当原型
 - 禁止不看设计说明书直接画
+- 禁止原型新增 Feature Spec 未定义的角色、业务结果或状态
+- 涉及 UI 的 AC 必须能够追踪到具体 Frame / 页面 / 关键交互
 - **V6.1 规范检查（必须全部通过）：**
   - [ ] 所有显示文字是否全中文（禁止英文占位符）
   - [ ] 圆角是否控制在 8px-12px 以内（严禁 >12px）
@@ -207,4 +212,4 @@ docs/prototypes/
 - Stitch 模式：`docs/prototypes/NN-界面名/`（HTML+CSS）
 - Pencil 模式：`docs/prototypes/*.pen`
 
-**未经用户确认，不得进入阶段 C。**
+**未经用户确认，不得进入技术方案阶段（TS）。**

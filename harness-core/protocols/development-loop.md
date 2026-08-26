@@ -1,12 +1,10 @@
-# /sdd-start - 启动多 Agent 开发流程
+# 开发循环协议（Development Loop）
 
-## 使用方式
+本协议是 SDD V7_2 多智能体开发循环的唯一权威定义，位于 `harness-core/protocols/`，由三端共同引用。
 
-```
-/sdd-start
-```
+触发方式为语义路由，无命令层：当用户表达「开始开发 / 进入开发阶段 / 继续多智能体开发 / 继续 tasks.json 里的任务」等明确开发意图，且产品设计产物已齐全时，Harness Router（`harness-core/router.md`）直接路由到本协议。
 
-项目进入开发模式。你将成为 Development Orchestrator，调度 Planner、Developer、Tester 三个子智能体协作完成全部开发任务。
+进入本协议后，项目进入开发模式。你将成为 Development Orchestrator，调度 Planner、Developer、Tester 三个子智能体协作完成全部开发任务。
 
 **开发模式采用人工门禁驱动。**
 
@@ -22,8 +20,14 @@
 
 以下文件必须存在（由产品设计阶段生成）：
 - `docs/PRD.md`
+- `docs/feature-map.md`
+- `docs/domain-model.md`
+- `docs/data-model.md`
 - `docs/api-contracts.md`
 - `docs/Plan.md`
+- 全部 MVP `docs/features/*/spec.md`
+- 全部 MVP `docs/features/*/plan.md`
+- 已确认原型
 
 如果有任一文件缺失，停止并提示用户补齐。
 
@@ -37,7 +41,7 @@
 - 不要阅读代码文件的具体内容（让 Developer/Tester 读）
 - 不要阅读完整测试报告内容（只看 PASS/FAIL 结果）
 - 不要自己写代码
-- 不要修改 PRD / Plan / api-contracts（那是产品设计阶段的产物）
+- 不要修改 PRD、Feature Map/Spec、Domain/Data Model、原型、Feature/Global Plan 或 API 契约（它们是产品设计阶段的产物）
 - 不要跳过 Tester 验证
 
 **允许：**
@@ -56,7 +60,7 @@
 
 执行步骤：
 
-1. 读取 `docs/PRD.md`、`docs/api-contracts.md`、`docs/Plan.md`
+1. 读取 `docs/PRD.md`、`docs/feature-map.md`、`docs/domain-model.md`、`docs/data-model.md`、全部 MVP Feature Spec/Plan、`docs/api-contracts.md`、`docs/Plan.md`
 2. 提取所有外部服务依赖，包括但不限于：
    - LLM / Embedding / Reranker / OCR / 语音 / 支付 / 短信 / 邮件 / 对象存储 / 地图 / 第三方登录 / Webhook
    - 数据库、向量库、Redis、消息队列等非本地默认服务
@@ -97,7 +101,7 @@
 ```
 Task({
   description: "拆分开发任务",
-  prompt: "项目路径：<active_project_path>\n项目类型：<web/mobile>\n\n读取 docs/PRD.md、docs/Plan.md、docs/api-contracts.md，生成 .sdd/tasks.json。",
+  prompt: "项目路径：<active_project_path>\n项目类型：<web/mobile>\n\n读取 docs/PRD.md、docs/feature-map.md、docs/domain-model.md、docs/data-model.md、docs/features/*/spec.md、docs/features/*/plan.md、docs/api-contracts.md、docs/Plan.md，生成 .sdd/tasks.json。不得重新发明 Feature 边界或验收标准。",
   subagent_type: "planner",
   run_in_background: false
 })
@@ -110,9 +114,10 @@ Planner 完成后，读取 `.sdd/tasks.json`，检查：
 1. 开发顺序是否符合 Plan.md 中的计划顺序
 2. 每个任务的 description 是否足够清晰
 3. `rules_files` 路径是否指向 `harness-core/dev-standards/` 下的实际文件（tasks.json 内仍可写成 `dev-standards/...`，但执行时必须解析到 `harness-core/dev-standards/...`）
-4. 每个任务是否有明确的 acceptanceCriteria
-5. dependencies 是否合理（无循环依赖）
-6. Web 项目的后端业务任务是否包含任务内真实联调标准：
+4. 每个任务的 `source_feature` 是否引用 Feature Map 中存在的 Feature ID
+5. 每个任务的 acceptanceCriteria 是否保留对应 Feature Spec 的 AC ID，且没有新增、扩大或弱化 AC
+6. dependencies 是否合理（无循环依赖，且不违背 Feature 依赖图）
+7. Web 项目的后端业务任务是否包含任务内真实联调标准：
    - 如果任务对应已有前端页面或 `frontend/src/services/*`，必须有 `frontendIntegration.required=true`
    - acceptanceCriteria 必须包含 `VITE_USE_MOCK=false`、真实后端 API、页面无 `[Mock]` 或等价真实联调检查
    - 不能把“后续统一联调”作为该任务通过条件
@@ -143,7 +148,7 @@ Planner 完成后，读取 `.sdd/tasks.json`，检查：
 **是否按此清单开始逐个功能开发？**
 - 回复「开始」→ 进入第一个功能开发
 - 回复「调整」→ 说明需要修改的地方，我修正 tasks.json
-- 回复「暂停」→ 保存当前状态，后续用 `/sdd-start` 继续
+- 回复「暂停」→ 保存当前状态，下次继续开发时由 Router 重新进入本协议
 ```
 
 **未经用户确认「开始」或等效表达，不得进入开发循环。**
@@ -247,7 +252,7 @@ Developer 产出的文件：[从 Developer 返回中提取文件列表]",
      - 回复「推送并继续」→ 将本次修改提交并推送到 Git，然后进入下一个功能
      - 回复「提交但不推送」→ 将本次修改提交到 Git（不推送），然后进入下一个功能
      - 回复「继续」→ 不执行 Git 操作，直接进入下一个功能
-     - 回复「暂停」→ 保存状态，下次用 `/sdd-start` 继续
+     - 回复「暂停」→ 保存状态，下次继续开发时由 Router 重新进入本协议
      ```
 
      **必须等待用户明确回复后才能继续。**
@@ -320,7 +325,7 @@ Developer 产出的文件：[从 Developer 返回中提取文件列表]",
         请选择：
         - 回复「跳过」→ 跳过本任务，自动继续下一个可执行任务
         - 回复「查看报告」→ 展示测试报告详情
-        - 回复「暂停」→ 保存状态，下次用 `/sdd-start` 继续
+        - 回复「暂停」→ 保存当前状态，下次继续开发时由 Router 重新进入本协议
         ```
      4. **必须等待用户明确回复后才能继续**
      5. 用户说「跳过」→ 标记 blocked，进入下一个任务
@@ -357,7 +362,7 @@ END WHILE
 ### 下一步
 - 生成 docs/startup.md（启动文档）
 - 用户业务验收
-- 发现问题可使用 /sdd-bugfix 修复
+- 发现问题可走 Bugfix 流程修复（`harness-core/skills/sdd-bugfix/SKILL.md`）
 ```
 
 ---
