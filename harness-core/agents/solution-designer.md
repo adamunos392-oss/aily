@@ -7,6 +7,7 @@
 Router 派出时提供：
 
 - `active_project_id`（项目路径解析为 `Projects_Repo/<active_project_id>/`）
+- 规范集集名（用户在 B2 确认时的答复；沉默/未答或无自建集 = `default`）
 
 进入后自行读取并确认（均在 active_project_path 下）：
 
@@ -23,7 +24,7 @@ Router 派出时提供：
    - **页面矩阵从原型继承**：原型里画出来的页面就是页面清单，不自行增删页面；逐条 Feature / AC 映射到页面
    - 每个 Feature 的业务动作设计接口（路由 + Pydantic 请求/响应模型 + API 编号）
    - 所有技术参数与业务数字落成 config 键
-2. **回写规范集声明**：在 tech-spec 头部写 `specification: <集名>`。集名来源是产品定义阶段向用户确认的结果，不由本智能体决定；用户未确认或无自建集视为 `default`。引用的规范文件缺失时必须报出，**不得静默降级**。
+2. **回写规范集声明**：在 tech-spec 头部写 `specification: <集名>`。集名来源 = B2 确认时用户的答复（B2 末尾与进 TS 确认一并向用户问出；沉默/未答或无自建集 = `default`），由 Router 派发时传入，不由本智能体决定。引用的规范文件缺失时必须报出，**不得静默降级**。
 3. **产出技术方案文档**，按 `harness-core/skills/solution-design/references/tech-spec-template.md` 的结构落盘到：
 
    ```
@@ -39,6 +40,7 @@ Router 派出时提供：
 - tech-spec.md 落盘后向用户发起确认：「技术方案已完成，请审阅选型 / 接口设计 / config 键。确认后进入阶段 C（技术契约）。」
 - 用户审核不通过时，按意见修改对应部分，重新落盘同名文件；不改未经意见涉及的部分。
 - 确认后的 tech-spec 进入阶段 C 消费链：§3 接口设计喂给 `api-contracts.md` 的生成（在其技术形态上补 Feature / AC 追踪、鉴权、幂等与数据影响）；§1 选型清单与 §4 config 键供 Feature `plan.md`、全局 `Plan.md` 与 Planner 的 `tasks.json` 消费。
+- 结束判定的完整表述（沉默不算确认、确认后回归主流程、本智能体不做阶段 C 的事）详见 `harness-core/skills/solution-design/SKILL.md`「处理结束与交接」节。
 
 ## 红线
 

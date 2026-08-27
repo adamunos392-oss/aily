@@ -18,7 +18,7 @@ Harness Router 负责：
 5. 自动调用 `scripts/sdd_project.py` 和对应 Skill / Protocol
 6. 保证所有业务文件写入当前活动项目目录
 **7. 执行指令之前，与用户对齐全局系统可使用的python指令（不默认用户系统使用python 或者python3 激活正确版本的python系统）**
-8. Web 项目原型（阶段 B2）确认后、技术契约（阶段 C）开始前，派出 solution-designer 子智能体产出 `docs/tech-spec.md`（定义见 `harness-core/agents/solution-designer.md`，产物供阶段 C 的 api-contracts 与 Planner 消费）
+8. Web 项目原型（阶段 B2）确认后、技术契约（阶段 C）开始前，派出 solution-designer 子智能体产出 `docs/tech-spec.md`（定义见 `harness-core/agents/solution-designer.md`，产物供阶段 C 的 api-contracts 与 Planner 消费）；派发时把用户在 B2 确认时的规范集答复一并传入（沉默/未答 = default），由 solution-designer 写入 tech-spec 头部
 只有当产品定义、Feature Map、Domain Model、全部 MVP Feature Spec/Plan、技术方案（tech-spec）、物理数据模型、API 契约、原型和全局 Plan 齐全，与用户对齐了 python 指令与虚拟环境名称、用户明确开始开发时，才进入智能体开发模式，由 Harness Router 调度 Planner / Developer / Tester。
 
 ## Active Project Path 强制规则
@@ -47,6 +47,7 @@ active_project_path = Projects_Repo/<active_project_id>/
 docs/PRD.md                  => <active_project_path>/docs/PRD.md
 docs/feature-map.md          => <active_project_path>/docs/feature-map.md
 docs/domain-model.md         => <active_project_path>/docs/domain-model.md
+docs/ui-design-spec.md       => <active_project_path>/docs/ui-design-spec.md
 docs/data-model.md           => <active_project_path>/docs/data-model.md
 docs/api-contracts.md        => <active_project_path>/docs/api-contracts.md
 docs/Plan.md                 => <active_project_path>/docs/Plan.md
@@ -54,7 +55,6 @@ docs/features/               => <active_project_path>/docs/features/
 docs/prototypes/             => <active_project_path>/docs/prototypes/
 docs/澄清文档/               => <active_project_path>/docs/澄清文档/
 .sdd/tasks.json              => <active_project_path>/.sdd/tasks.json
-.sdd/tmp/ui-design-spec.md   => <active_project_path>/.sdd/tmp/ui-design-spec.md
 .sdd/experience.md           => <active_project_path>/.sdd/experience.md
 .sdd/test-reports/           => <active_project_path>/.sdd/test-reports/
 .sdd/bug_fix/                => <active_project_path>/.sdd/bug_fix/
@@ -76,8 +76,7 @@ mobile/                      => <active_project_path>/mobile/
 - 用户问当前项目：Agent 代为运行 `python scripts/sdd_project.py current`
 - 用户要列项目：Agent 代为运行 `python scripts/sdd_project.py list`
 
-为用户执行完创建项目的指令后，反问用户对需求的清晰程度，决定是否进入`alignment` skills。
-参考反问模版：请问您是否对自己将要开发的项目有比较清晰的全流程把握？如果是，请你提供已有的流程解析，如果不是，我们将一起进入对齐阶段。
+为用户执行完创建项目的指令后，进入 `sdd-product design skills` 进入产品设计阶段。
 
 新建项目或切换项目后，必须向用户明确当前活动项目：
 

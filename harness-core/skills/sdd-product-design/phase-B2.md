@@ -6,7 +6,7 @@
 
 ## 设计规范底座（必须加载）
 
-**无论使用 Stitch 还是 Pencil MCP，进入 B2 时必须先加载 UI Design Standard Skill（位于 `harness-core/skills/ui-design-standard/SKILL.md`）作为设计底层规范。**
+**进入 B2 时必须先加载 UI Design Standard Skill（位于 `harness-core/skills/ui-design-standard/SKILL.md`）作为设计底层规范。**
 
 该 Skill 定义了：
 - 字阶策略（标题 Outfit + 正文 Geist/Inter，标题字距 -0.04em）
@@ -18,198 +18,90 @@
 
 **所有原型产出必须通过该 Skill 的验证清单后才能提交用户确认。**
 
-## 工具选择（必须询问用户）
+## 设计步骤顺序
 
-**进入 B2 时必须先询问用户**：「请选择原型设计工具：Stitch 还是 Pencil MCP？」**未经用户明确回答，不得开始设计。**
+按以下顺序执行，每一步先有产出，再进入下一步。
 
-| 方式 | 工具 | 输出格式 | 特点 |
-|------|------|---------|------|
-| **Stitch** | Google Stitch | HTML + TailwindCSS（.zip） | 速度快，输出代码可直接参考开发 |
-| **Pencil MCP** | 内置 Pencil | .pen 文件 | 无需外部工具，全在编辑器内完成 |
+**步骤 1：读取输入，确定页面范围**
 
----
+- 读取 `docs/ui-design-spec.md`（B1 产出）的界面清单与风格调研摘要
+- 读取 `docs/PRD.md`、`docs/feature-map.md`，确认 MVP 功能范围
+- 产出：本轮要设计的页面范围，每页标注承载的 Feature ID。若界面清单与功能范围对不上，返回 B1 补说明书
 
-## 模式 A：Stitch
+**步骤 2：整理页面状态清单**
 
-### 步骤 1：生成 Stitch 提示词
+- 逐页列出必须呈现的状态：默认态、空态、错误态、加载态
+- 每个交互组件核对 M3 五态（Enabled / Disabled / Hover / Pressed / Focused）
+- 产出：页面 × 状态清单，作为逐页设计的检查表
 
-**整体生成**，每个界面基于 B1 阶段确定的风格生成 **1 段英文提示词**，最后**整合输出最终提示词**。
+**步骤 3：定视觉基调的具体值**
 
-AI 阅读 `ui-design-spec.md`，为每个界面生成英文提示词，必须包含：
+- 把 B1 的风格方向落成逐项数值：配色（每个用途一个色值）、字体（标题 / 正文）、字号阶梯、间距、圆角（核心组件 8px，严禁 >12px）
+- 这些值是后续开发的权威值：同类组件用同一组值，不得每页各定一套
+- 产出：一份可直接照抄进开发的设计取值表
 
-```
-1. 页面类型与用途
-2. 视觉风格（融入 V6.1 规范）
-   → 配色（Primary/Secondary/CTA/Background/Text/Border 色值）
-   → 字体（标题 Outfit + 正文 Geist/Inter，标题 Track-tight -0.04em）
-   → 圆角 8px（radius-sm），严禁 >12px
-   → Off-Black #18181B，核心指标使用 Tonal Focus
-   → 注入 Stitch VIBE: "Industrial Refinement / Clinical Curator"
-3. 布局结构
-4. 组件清单及细节
-5. 示例数据（列表至少 3 条，对话至少 2-3 轮，表格至少 3-5 行）
-6. 视口（桌面端 1440×900 或 移动端 390×844）
-```
+**步骤 4：逐页设计**
 
-**提示词模板**：
+做完一页再下一页，每页按固定顺序：
 
-```
-**VIBE & ATMOSPHERE:** Industrial Refinement / Clinical Curator.
-**STITCH DESIGN SYSTEM:**
-- Platform: [Web/Mobile], [Desktop]-first
-- Palette: [Primary Name] (#hex), Canvas [#hex], Off-Black #18181B
-- Typography: Headings Outfit (Track-tight -0.04em) + Body Geist/Inter
-- Geometry: MANDATORY 8px corners (radius-sm), symmetric-grid for data dashboards
-- Tonal Focus: High-contrast fill for hero metrics
+1. 布局骨架：整体结构、分区、网格（数据密集场景用对称 3 列 / 4 列网格）
+2. 组件摆放：按 B1 组件清单放置，位置与数据来源照说明书
+3. 交互状态：补齐步骤 2 列出的全部状态
+4. 真实中文文案：用 B1 示例数据填入，禁止英文占位符和"数据1"式占位
 
-**Layout**: [Layout description from spec]
+- 约束：不新增 Feature Spec 范围外的按钮、角色或业务结果；确有必要新增交互，先返回阶段 F 更新对应 `spec.md` 并重新确认
+- 产出：全部页面的原型稿
 
-**Components**:
-- [Area]: [Component type] — [Specific content and data]
-...
+**步骤 5：串联页面**
 
-**Sample Data** (ALL IN CHINESE):
-- [Real data 1 in Chinese]
-...
+- 补齐页面间的导航与跳转关系
+- 对照 PRD 主场景，验证核心用户流程能从入口页一路点到底
+- 产出：可从头走到尾的完整原型
 
-Desktop viewport, 1440×900.
-```
+**步骤 6：自检**
 
-将提示词**在对话中呈现**给用户（不落盘），告知：「已生成 Stitch 提示词，请复制到 Stitch 中生成界面。」
+- 功能覆盖：每个 MVP Feature 至少落到一个页面；界面清单里的每页都在原型中
+- 视觉一致：对照步骤 3 的取值表逐页核对，同类组件同值
+- 交互状态：对照步骤 2 的状态清单逐页核对
+- 通过 UI Design Standard 的 V6.1 规范验证清单
+- 产出：自检结果（在对话中给出，不单独建文件）
 
-### 步骤 2：用户在 Stitch 中生成并导出
+**步骤 7：落盘并提请确认**
 
-用户操作（AI 给出指引）：
-1. 打开 stitch.withgoogle.com
-2. 粘贴提示词 → 生成界面
-3. 点击 More → Download 下载 .zip
-4. 解压到 `docs/prototypes/` 下对应目录
-
-**文件规范**：
-
-```
-docs/prototypes/
-├── 01-登录页/
-│   ├── index.html
-│   └── style.css (TailwindCSS)
-├── 02-仪表盘/
-│   └── ...
-└── ...
-```
-
-命名规则：`NN-界面名/`，NN 为两位序号。
-
-### 步骤 3：AI 验证
-
-每个界面导入后，AI 读取 HTML/CSS 文件：
-- 对照 ui-design-spec.md 的组件清单逐项核对
-- 检查示例数据完整性
-- 检查布局结构是否与 spec 一致
-- 标注缺失或偏差
-
-逐界面确认：「界面 [N/总数]『[界面名]』已验证，请确认或修改。」
-
-### 步骤 4：完成收尾
-
-1. 全部界面完成后，删除临时文件 `.sdd/tmp/ui-design-spec.md`
-2. 发起最终确认：「所有界面原型已完成，确认后进入技术方案阶段（TS）：派出 solution-designer 子智能体生成 `docs/tech-spec.md`。」
-
----
-
-## 模式 B：Pencil MCP
-
-### 准备工作
-
-1. **加载 UI Design Standard Skill V6.1**
-2. 阅读 `ui-design-spec.md` 中的风格调研摘要
-3. 调用 `get_guidelines("web-app")` 获取 Pencil 设计指南
-4. 调用 `get_style_guide_tags` → `get_style_guide(tags)` 获取风格参考
-5. 调用 `open_document("new")` 创建新画布
-**如果Pencil MCP 连接失败，告诉用户：「可以自行前往pencil 绘制原型图，后将.pen文件保存至项目路径下的docs/prototypes文件夹下」并且提供用户可直接复制走提供给pencil工作的提示词,提示词要保存在docs/prototypes文件夹下（完备描述项目的页面逻辑及设计规范）**
-### 批量绘制
-
-**允许一次性绘制全部界面，不需要每个界面单独门禁。**
-
-执行要求：
-
-1. 阅读 ui-design-spec.md 中全部界面描述
-2. 为每个界面创建 1 个独立 Frame，命名为 `NN-界面名`，尺寸 1440×900
-3. 所有 Frame 必须在同一画布中有序排列，禁止重叠
-4. 每个 Frame 严格按组件清单和示例数据绘制
-5. 全部界面绘制完成后，再统一截图验证、保存、发起 B2 阶段门禁
-
-### Pencil 画布布局硬规则
-
-所有界面 Frame 必须在同一画布中横向排列或网格排列，不得重叠。
-
-默认采用横向排列：
-
-```text
-01-登录页：x=0, y=0, width=1440, height=900
-02-主界面：x=1680, y=0, width=1440, height=900
-03-员工端页面：x=3360, y=0, width=1440, height=900
-04-坐席端页面：x=5040, y=0, width=1440, height=900
-05-知识库管理页面：x=6720, y=0, width=1440, height=900
-```
-
-如果界面超过 5 个，可改用网格排列：每行最多 3 个，水平间距 240，垂直间距 240。
-
-也可以在插入新界面前调用 `find_empty_space_on_canvas(direction="right", width=1440, height=900, padding=240)` 找空位。
-
-禁止：
-
-- 不指定 `x/y` 就插入新的界面 Frame
-- 把多个界面放在同一个 Frame 内
-- 把多个 1440×900 Frame 放在同一坐标
-- 为了节省空间缩小界面 Frame 尺寸
+- 原型写入 `docs/prototypes/`
+- 向用户发起确认：说明原型与 Feature 的对应关系，明确询问是否进入技术方案阶段（TS），并同带一句“本项目用默认规范集（default）还是自建规范集？”
+- 用户确认前，不得派出 solution-designer（见下方门禁）
 
 ### B2 阶段门禁
 
-全部界面绘制完成后，必须执行统一验证：
-
-1. 调用 `snapshot_layout(problemsOnly=true)` 检查是否存在重叠、裁切、布局异常
-2. 对关键界面调用 `get_screenshot` 核对
-3. 对照 ui-design-spec.md 的组件清单逐项核对
-4. 确认所有 Frame 坐标不同，且排列清晰
-5. 对照 `docs/features/*/spec.md` 检查涉及 UI 的 AC 是否都有可见交互证据
-6. 提醒用户 ⌘+S 保存当前 `.pen` 文件
-
-统一确认文案：
-
-```text
-阶段 B2 原型已完成，共 [N] 个界面。
-我已检查：Frame 不重叠、尺寸一致、组件与说明书一致。
-请保存 .pen 文件到 docs/prototypes/，并确认是否进入技术方案阶段（TS）。
-```
+- **提请确认后停等**：原型提请确认后，停下等待用户答复。用户明确答复前，不得派出 solution-designer，不得进入技术方案阶段（TS）。
+- **确认的标准**：只有用户明确认可“进入技术方案阶段（TS）”才算通过（如回复“确认”“进入 TS”）。沉默、无回应、或只继续讨论原型内容，都不算确认。
+- **确认时同时问规范集**：提请确认话术同带一句“本项目用默认规范集（default）还是自建规范集？”，与进 TS 确认合并一次交互。规范集沉默/未答 = default，不阻塞确认（声明制，非审批制）——规范集未答不影响“进入 TS”确认本身的判定。
+- **修改即循环**：用户提出修改意见 = 门禁未通过。按意见修改原型（更新 `docs/prototypes/` 内对应文件），改完重新提请确认，回到停等。修改与确认可以多轮，直到用户明确认可。
+- **意见越界先返 F**：修改意见若改变 Feature 范围、业务规则或 AC，先返回阶段 F 更新对应 `spec.md` 并重新确认，再改原型。
 
 **未经用户明确确认“进入技术方案阶段（TS）”，不得派出 solution-designer。**
 
 ### 完成收尾
 
-1. 提醒用户将 .pen 文件保存到 `docs/prototypes/`
-2. 删除临时文件 `.sdd/tmp/ui-design-spec.md`
-3. 发起最终确认
+用户明确确认进入 TS 后：
 
----
+1. `docs/ui-design-spec.md` 常驻 `docs/`，不删除、不移动——ui-design-spec 已持久化为正式设计产物，旧临时路径 `.sdd/tmp/` 已废弃
+2. 原型文件保持落在 `docs/prototypes/`；本阶段不产生 `.sdd/tmp/` 临时文件，也没有任何临时产物需要清理
+3. 由 Router 派出 solution-designer 子智能体进入阶段 TS（定义见 `harness-core/agents/solution-designer.md`），派发时把用户的规范集答复一并传入（沉默/未答 = default），由其写入 tech-spec 头部 `specification:` 行；solution-designer 产出 `docs/tech-spec.md` 并发起确认，tech-spec 确认后再进入阶段 C
+4. 本阶段相关文件：`docs/ui-design-spec.md`（B1 产出，常驻）、`docs/prototypes/*`（B2 产出）、`docs/features/*/spec.md`（仅修改意见越界时回改）
 
-## 质量要求（两种模式通用）
+## 质量要求
 
-- 每个界面生成 1 版可视化原型
-- 列表/卡片至少 1 条示例数据
-- 对话界面至少 1 轮气泡消息
-- 禁止用 Markdown 文字描述充当原型
-- 禁止不看设计说明书直接画
-- 禁止原型新增 Feature Spec 未定义的角色、业务结果或状态
-- 涉及 UI 的 AC 必须能够追踪到具体 Frame / 页面 / 关键交互
-- **V6.1 规范检查（必须全部通过）：**
-  - [ ] 所有显示文字是否全中文（禁止英文占位符）
-  - [ ] 圆角是否控制在 8px-12px 以内（严禁 >12px）
-  - [ ] 数据密集场景是否使用对称等分网格布局
-  - [ ] 核心指标卡是否使用 Tonal Focus（高对比填充色）
-  - [ ] 标题是否使用 Outfit + Track-tight 紧凑排版
+以下条款在 B2 全程有效，逐条可判定：
 
-输出到：
-- Stitch 模式：`docs/prototypes/NN-界面名/`（HTML+CSS）
-- Pencil 模式：`docs/prototypes/*.pen`
+1. **视觉一致**：视觉取值以步骤 3 产出的设计取值表为唯一权威；同类组件用同一组值，不得每页各定一套
+2. **状态完整**：步骤 2 产出的页面 × 状态清单必须全部落到原型，缺任何一态即不合格
+3. **文案真实**：界面显示文字全中文，用 B1 示例数据填写；禁止英文占位符，禁止“数据1”式占位
+4. **范围不越界**：不新增 Feature Spec 范围外的按钮、角色、业务结果或状态；确有必要先返回阶段 F 更新 `spec.md` 并重新确认
+5. **可视化产出**：每个界面一版可视化原型，禁止用 Markdown 文字描述充当原型
+6. **按说明书设计**：严格按 `docs/ui-design-spec.md` 设计，不得不看说明书直接画，不得自由发挥
+7. **可追踪**：涉及 UI 的每条 AC 都能指认到具体页面和关键交互
+8. **规范底座全过**：视觉与交互逐项通过 UI Design Standard 的 V6.1 验证清单（`harness-core/skills/ui-design-standard/SKILL.md`）
 
 **未经用户确认，不得进入技术方案阶段（TS）。**

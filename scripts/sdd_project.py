@@ -59,7 +59,6 @@ def ensure_project_dirs(project_dir: Path) -> None:
         ".sdd",
         ".sdd/test-reports",
         ".sdd/bug_fix",
-        ".sdd/tmp",
         "docs",
         "docs/features",
         "docs/prototypes",

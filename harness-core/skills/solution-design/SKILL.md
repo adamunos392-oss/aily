@@ -1,8 +1,3 @@
----
-
-## name: solution-design
-
-description: SDD V7_2 技术方案设计（阶段 TS）。B2 原型确认后由 Router 派出 solution-designer 子智能体执行：把已确认的 PRD / Feature Map / Feature Spec / 原型拆解成 docs/tech-spec.md（选型清单 / 页面功能矩阵 / 接口设计 / config 键清单 / 外部服务规格 / 风险清单），供阶段 C 的 api-contracts 与 Planner 消费。适用于 /solution-design、技术方案、tech-spec、接口形态设计、config 键清单。
 
 # 技术方案设计（阶段 TS）
 
@@ -27,7 +22,7 @@ description: SDD V7_2 技术方案设计（阶段 TS）。B2 原型确认后由 
 | config 键与 .env 策略（端口 / 存储落点） | `specification/<集>/shared/env-policy.md`——db 路径与上传目录的 config 默认值照「存储落点」表落，不自造文件名 |
 | 密钥与外部服务调用红线 | `specification/<集>/shared/security.md` |
 
-`<集>` 从 tech-spec 头部 `specification:` 行取（来源：产品定义阶段用户确认的结果，未确认 = `default`），解析为 `harness-core/specification/<集>/`。规范集不由本 skill 决定。
+`<集>` 从 tech-spec 头部 `specification:` 行取（该行来源：B2 确认时用户的答复，由 Router 派发时传入；沉默/未答 = `default`），解析为 `harness-core/specification/<集>/`。规范集不由本 skill 决定。
 
 ## 产出
 
@@ -46,3 +41,10 @@ description: SDD V7_2 技术方案设计（阶段 TS）。B2 原型确认后由 
 - 选型超出白名单 = 偏航停报，不先斩后奏。
 - 引用的规范文件缺失必报，不静默降级。
 - 方案细节不得留"实现时再定"的空位。
+
+## 处理结束与交接
+
+1. **落盘后提请确认**：`docs/tech-spec.md` 落盘后向用户发起确认：「技术方案已完成，请审阅选型 / 接口设计 / config 键。确认后进入阶段 C（技术契约）。」
+2. **修改即循环**：用户提出修改意见 = 未通过。按意见修改 tech-spec 对应部分，不改未经意见涉及的部分，重新落盘同名文件并重新提请确认。沉默、无回应不算确认；修改与确认可以多轮。
+3. **确认后回归主流程**：用户明确确认 = 阶段 TS 结束，回归主流程进入阶段 C。阶段 C 以前置条件「tech-spec 已确认」接手：C1 技术架构蓝图的选型值、C3 接口的技术形态均以本 tech-spec 为权威（细节见 `harness-core/skills/sdd-product-design/phase-C.md`）。
+4. **职责边界**：本 skill 到 tech-spec 确认即止，不做任何阶段 C 的事——不产 `data-model.md` / `api-contracts.md`，不建 Feature `plan.md` 与全局 `Plan.md`，不拆 task。

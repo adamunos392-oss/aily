@@ -9,6 +9,7 @@
 - `docs/PRD.md`
 - `docs/feature-map.md`
 - `docs/domain-model.md`
+- `docs/competitor-analysis.md`
 - `docs/features/*/spec.md`（全部 MVP Feature 状态为 `Ready`）
 
 任一文件缺失或 Feature Spec 未 Ready，返回阶段 F，不得开始 UI 设计。
@@ -21,25 +22,9 @@
    - 每个页面必须列出承载的 Feature ID 和 AC ID
    - PRD 提供产品范围，Feature Spec 提供交互与验收依据
 
-2. **风格调研（使用 ui-ux-pro-max skill）**
+2. 基于`docs/competitor-analysis.md`调研结果，确定 **1 种视觉风格方向**。
 
-   根据项目特性，使用 `ui-ux-pro-max` skill 按以下顺序搜索：
-
-   1. **product** domain → 产品类型关键词，获取推荐风格方向
-   2. **style** domain → 按推荐结果深入查询 2-3 种风格细节
-   3. **color** domain → 获取配色方案（行业/产品关键词）
-   4. **landing** domain → 如果是落地页，搜索页面结构
-   5. **chart** domain → 如果有图表/仪表盘，搜索图表类型
-
-   **搜索结果必须写入设计说明书的「风格调研摘要」章节**，包括：
-   - 推荐风格名称及特征描述
-   - 推荐配色方案（Primary / Secondary / CTA / Background / Text / Border）
-   - 关键 UX 规则
-   - UI 布局规范
-
-3. 基于调研结果，确定 **1 种视觉风格方向**。
-
-4. **为每个界面撰写详细的 UI 设计说明**，整体结构：
+3. **为每个界面撰写详细的 UI 设计说明**，整体结构：
 
    ```markdown
    ## 风格调研摘要
@@ -95,7 +80,7 @@
    - 表格至少 2 行真实字段
    ```
 
-5. 输出到：`.sdd/tmp/ui-design-spec.md`（**临时文件**，阶段 B2 原型完成后删除）
+4. 输出到：`./docs/ui-design-spec.md`
 
 6. 完成追踪自检：
    - 每个 MVP Feature 至少有一个页面、视图或明确的“无 UI”说明

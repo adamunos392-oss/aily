@@ -20,6 +20,7 @@ docs/
 ├── PRD.md
 ├── feature-map.md
 ├── domain-model.md
+├── ui-design-spec.md
 ├── tech-spec.md
 ├── data-model.md
 ├── api-contracts.md

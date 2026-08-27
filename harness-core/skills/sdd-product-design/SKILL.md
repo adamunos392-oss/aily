@@ -23,8 +23,8 @@ description: SDD 产品设计全流程（R → A → F → B1 → B2 → TS → 
 | `docs/PRD.md` 不存在                                                                   | 阶段 R   | 读取 `phase-R.md`  |
 | `docs/PRD.md` 存在，但无「产品定义确认记录」                                                      | 阶段 A   | 读取 `phase-A.md`  |
 | `docs/PRD.md` 已确认，但 `docs/feature-map.md`、`docs/domain-model.md` 或功能 `spec.md` 不齐全 | 阶段 F   | 读取 `phase-F.md`  |
-| 功能地图、领域模型和全部 MVP 功能 `spec.md` 已确认，原型目录为空且无 `.sdd/tmp/ui-design-spec.md`       | 阶段 B1  | 读取 `phase-B1.md` |
-| `.sdd/tmp/ui-design-spec.md` 存在，或原型已开始但尚未完成确认                                  | 阶段 B2  | 读取 `phase-B2.md` |
+| 功能地图、领域模型和全部 MVP 功能 `spec.md` 已确认，原型目录为空且 `docs/ui-design-spec.md` 不存在       | 阶段 B1  | 读取 `phase-B1.md` |
+| `docs/ui-design-spec.md` 已存在，且原型尚未完成确认                                  | 阶段 B2  | 读取 `phase-B2.md` |
 | 原型已完成，但 `docs/tech-spec.md` 不存在                                                          | 阶段 TS  | 派出 solution-designer 子智能体 |
 | `docs/tech-spec.md` 已确认，但数据模型、接口契约、功能 `plan.md` 或全局 `Plan.md` 缺失                 | 阶段 C   | 读取 `phase-C.md`  |
 | PRD、功能地图、领域模型、功能 Spec/Plan、技术方案、数据模型、接口契约、全局 Plan 和原型齐全                  | 产品设计完成 | 告知用户可进入开发阶段      |
@@ -41,7 +41,7 @@ description: SDD 产品设计全流程（R → A → F → B1 → B2 → TS → 
 - 每阶段输出后，给出「执行动作总结 + 待确认问题」
 - 设计文档统一输出到 `docs/`，流程状态/临时文件统一输出到 `.sdd/`
 - **精简产出**：非必要不新增文件。过程中的调研、草稿、中间结论在对话中完成，最终结论合并写入核心文件。禁止为过程产物单独建文件
-- **`docs/` 最终保留核心设计产物**：`PRD.md`、`feature-map.md`、`domain-model.md`、`tech-spec.md`、`data-model.md`、`api-contracts.md`、`Plan.md`、`features/`、`prototypes/`。`.sdd/` 保留项目状态、任务、经验、日志和报告
+- **`docs/` 最终保留核心设计产物**：`PRD.md`、`feature-map.md`、`domain-model.md`、`ui-design-spec.md`、`tech-spec.md`、`data-model.md`、`api-contracts.md`、`Plan.md`、`features/`、`prototypes/`。`.sdd/` 保留项目状态、任务、经验、日志和报告
 - **产品定义与技术契约分离**：PRD 只锁定产品目标、角色、场景、范围和业务规则；物理表字段、请求/响应 DTO、接口路径必须在功能地图和功能 Spec 确认后设计
 - **Feature 是业务验收单位**：页面、组件、接口、数据库表都不能单独替代 Feature；每个 Feature 必须有唯一 ID、独立用户结果、边界、依赖和可判定的验收标准
 - **Feature 与 Task 分层**：Feature 负责业务交付与验收定义；Task 负责智能体执行。`.sdd/tasks.json` 在开发入口由 Planner 根据已确认的 Feature Plan 编译
