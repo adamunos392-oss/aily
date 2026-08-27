@@ -13,9 +13,10 @@
 5. 读取 `docs/api-contracts.md`，理解接口契约
 6. 读取 `docs/tech-spec.md`，理解选型清单与 config 键清单（顶层 `external_services` 的 `config_keys` 从 tech-spec §4 继承，不自造键名）
 7. 读取 `docs/Plan.md`，理解全局开发阶段、外部服务与测试权限清单
-8. 确认项目形态：`web` / `mobile` / `unknown`
-9. 如果 Feature Spec/Plan 或外部服务清单缺失，必须报告编排器补齐后再生成任务
-10. **读取 PRD 显式约束（关键）**：
+8. **读取视觉权威源（Web 项目必做）**：读取 `docs/ui-design-spec.md`（B1 界面清单）与 `docs/prototypes/`（含 `design-tokens.md`，B2 步骤 3 产出的权威取值表）。前端/integration 任务的 `description` 必须写明对应原型锚点（如 `docs/prototypes/index.html#emp-consult`），不得只写「样式对齐原型」这类无路径表述
+9. 确认项目形态：`web` / `mobile` / `unknown`
+10. 如果 Feature Spec/Plan 或外部服务清单缺失，必须报告编排器补齐后再生成任务
+11. **读取 PRD 显式约束（关键）**：
    - 提取 PRD 中所有「暂不做」「不实现」「所有用户可」「不做隔离」「V2+ 再实现」等显式约束声明
    - 提取「权限说明」「约束条件」「边界情况」等章节中的限制
    - **校验**：生成的 `acceptanceCriteria` 不得与这些显式约束矛盾
@@ -260,6 +261,7 @@
 - **API 调用**：通过 Mock 接口获取数据（如 `frontend/src/mocks/` 或 MSW 等 Mock 方案），严禁调用后端真实 API
 - **目的**：让用户先验收页面布局、配色、字体、圆角、间距、交互动效、响应式适配，同时验证前端 service 层接口契约与 api-contracts.md 一致
 - **user_gate**：`true`（完成后触发用户门禁）
+- **视觉验收（必须，不得省略）**：`acceptanceCriteria` 必须至少含一条视觉对齐项，格式「页面布局、配色与全部文案与 `docs/prototypes/<原型文件>#<锚点>` 对应 section 一致」；`technicalChecks` 必须含「样式取值与 `docs/prototypes/design-tokens.md` 逐项一致（色值/字号/圆角/间距）」
 - **acceptanceCriteria 示例**：
   - "登录页展示账号密码输入框和登录按钮，布局与原型一致"
   - "员工端页面展示咨询输入框和消息列表，AI 回答消息以气泡形式展示"
@@ -385,8 +387,16 @@
 |---------|------------|
 | 后端功能 | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md"]` |
 | 后端功能（AI Agent） | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md", "dev-standards/backend-plugin.md"]` |
-| 前端功能 | `["dev-standards/frontend.md"]` |
-| 集成测试 | `["dev-standards/frontend.md", "dev-standards/backend-dev.md"]` |
+| 前端功能 | `["dev-standards/frontend.md", "specification/default/frontend/style.md", "specification/default/frontend/tech-stack.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md"]` |
+| 集成测试 | `["dev-standards/frontend.md", "specification/default/frontend/style.md", "specification/default/frontend/tech-stack.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md", "dev-standards/backend-dev.md"]` |
+
+**rules_files 路径前缀解析**：
+
+- `dev-standards/...` → `harness-core/dev-standards/...`
+- `specification/...` → `harness-core/specification/...`
+- `docs/...` → 当前项目目录下的设计产物（视觉权威源）
+
+**强制**：Web 项目前端功能与涉及前端页面的集成测试，`rules_files` 必含 `docs/ui-design-spec.md` 与 `docs/prototypes/design-tokens.md`，`description` 必含原型锚点路径——这是前端任务视觉不跑偏的上下文底线。
 
 #### 移动端应用
 

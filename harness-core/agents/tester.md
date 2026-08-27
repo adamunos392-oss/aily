@@ -57,7 +57,9 @@
 
 如果当前任务涉及前端页面开发（修改了 `frontend/src/pages/`、`frontend/src/components/` 或 `frontend/src/mocks/`）：
 
-1. **高保真原型文案对齐（严格）**：读取 `docs/prototypes/` 下的高保真原型文件（`.pen`、`.excalidraw`、`.fig` 等），逐字对比实现中的可见文案
+**优先级声明**：本节是前端任务的强制验证项。即使任务的 `acceptanceCriteria` 未写入视觉/文案条款，本节仍必须执行并可直接判 FAIL——视觉与文案对齐属于前端任务的隐含验收范围，不受「范围收敛铁律」中"超出 acceptanceCriteria 的验证项"的豁免。
+
+1. **高保真原型文案对齐（严格）**：读取 `docs/prototypes/` 下的高保真原型文件（HTML 原型如 `index.html`、`.pen`、`.excalidraw`、`.fig` 等，格式不限），逐字对比实现中的可见文案
    - 任何文案与原型不一致 → **FAIL**，包括标题、副标题、按钮文字、提示语、空状态文案、错误提示文案
    - Developer 凭感觉写的文案（如"企业 IT 支持平台"代替原型的"请输入您的账号密码登录系统"）→ **FAIL**
    - 原型中存在的元素（如"忘记密码？"链接、"记住我"选项）在实现中缺失 → **FAIL**
@@ -67,6 +69,9 @@
    - Mock 字段必须是 api-contracts.md 中已定义字段的**子集**
    - Mock 中出现 api-contracts.md 未定义的字段（如擅自添加 `display_name`）→ **FAIL**
    - TypeScript 类型定义与 api-contracts.md 不一致 → **FAIL**
+4. **取值表静态核对（强制）**：读取 `docs/prototypes/design-tokens.md`（B2 权威取值表），静态核对实现样式（CSS 变量 / 样式表 / 组件内联样式）中的色值、字体、字号、圆角、间距
+   - 实现中出现取值表与原型之外的自造近似值（如圆角 12px vs 取值表 8px、主色 #2563EB vs 取值表 #1D4ED8）→ **FAIL**
+   - 原型 section 的布局结构（分栏、网格、导航壳层）与实现明显不符 → **FAIL**
 
 ### 第二步补充 B：Mock 阶段测试边界
 

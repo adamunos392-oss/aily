@@ -15,15 +15,19 @@
 2. 读取任务描述（从传入的参数获取任务 ID，然后从 `.sdd/tasks.json` 提取该任务的 description）
 3. 读取 `.sdd/tasks.json` 中该任务的 `rules_files` 字段列出的所有规范文件，**严格遵守**其中的开发规则
    - `rules_files` 中的 `dev-standards/...` 必须解析为 `harness-core/dev-standards/...`
+   - `rules_files` 中的 `specification/...` 必须解析为 `harness-core/specification/...`；`docs/...` 前缀解析为当前项目目录下的设计产物
    - 不要去项目目录或 `.cursor/` 下寻找规则副本
 4. 根据任务的 `source_feature` 读取对应 `docs/features/<feature-id>/spec.md` 和 `plan.md`，再读取 `docs/data-model.md`、`docs/api-contracts.md`，确保实现没有越过 Feature 边界且符合数据/API 契约
 5. 如果任务的 `externalServices` 非空，读取 `.sdd/tasks.json` 顶层 `external_services` 和 `docs/Plan.md` 的「外部服务与测试权限清单」，确认配置字段、降级策略和 Tester 联调权限
-6. **前端任务：读取高保真原型文件（必须）**
-   - 前端任务（type = `frontend` 或 `integration`）必须读取 `docs/prototypes/` 下的高保真原型文件（`.pen`、`.excalidraw`、`.fig` 等）
-   - **所有页面文案（标题、副标题、按钮文字、提示语、空状态文案）必须与原型文件完全一致**
-   - **所有布局、配色、间距、圆角、字体大小必须与原型文件完全一致**
-   - **禁止凭感觉写文案或调整样式**，任何与原型不一致的实现都会被 Tester 判定为 FAIL
-   - 如果原型中某处文案不清晰，优先参考 `docs/PRD.md` 中的页面描述，不得自行创造文案
+6. **按任务 type 分流的必读清单（必须，开工前置）**
+   - **前端任务（type = `frontend`，或 `integration` 且涉及前端页面）**：
+     - 读取 `docs/prototypes/` 下与任务页面对应的原型 section（锚点见任务 description，如 `docs/prototypes/index.html#emp-consult`）。原型格式不限——HTML 原型（如 `index.html` + `tokens.css`）、`.pen`、`.excalidraw`、`.fig` 均必须打开对照，**不得因格式未在举例中列出而跳过**
+     - 读取 `docs/prototypes/design-tokens.md`（B2 步骤 3 产出的权威取值表）：**色值、字体、字号、字重、圆角、间距必须逐项照抄取值表**，禁止凭感觉写近似值；原型样式文件（如 `tokens.css`）与之配套使用
+     - 读取 `docs/ui-design-spec.md` 的界面清单与关键 UX 规则，确认页面结构、文案口径、角色壳层
+     - **所有页面文案（标题、副标题、按钮文字、提示语、空状态文案）必须与原型完全一致**
+     - **所有布局、配色、间距、圆角、字体以原型 + design-tokens.md 为唯一权威**；**禁止凭感觉写文案或调整样式**，任何与原型不一致的实现都会被 Tester 判定为 FAIL
+     - 如果原型中某处文案不清晰，优先参考 `docs/PRD.md` 中的页面描述，不得自行创造文案
+   - **后端任务（type = `backend`）**：读取 `docs/api-contracts.md` 对应 API 章节与 `docs/data-model.md` 对应表定义，按 rules_files 中的 backend 分层规范（backend-dev / backend-layers / backend-plugin）实现
 7. **Git 仓库检查**：读取 `harness-core/skills/git-workflow/SKILL.md`
    - 检查当前项目目录是否为 Git 仓库（`git rev-parse --is-inside-work-tree`）
    - 如果不是 → 初始化仓库（`git init -b main`），配置 `.gitignore`，创建初始提交
@@ -121,7 +125,8 @@
    **前端任务：**
    - [ ] `npm run type-check` 通过
    - [ ] `npm run lint` 通过
-   - [ ] 高保真原型文案/样式已核对
+   - [ ] 高保真原型文案/样式已核对（本任务页面对应原型 section 逐项过一遍）
+   - [ ] 样式取值已逐项对照 `docs/prototypes/design-tokens.md`（色值/字号/圆角/间距），无取值表外的凭感觉近似值
    - [ ] Mock 字段是 `api-contracts.md` 已定义字段的子集
    - [ ] 每个 Mock handler 都按 endpoint 显式构造响应 DTO，没有直接返回内部实体对象
    - [ ] 同一功能域的全部 endpoint、service 泛型和页面接收类型已一起核对，没有用宽泛实体类型替代 endpoint DTO

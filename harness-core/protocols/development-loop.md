@@ -101,7 +101,7 @@
 ```
 Task({
   description: "拆分开发任务",
-  prompt: "项目路径：<active_project_path>\n项目类型：<web/mobile>\n\n读取 docs/PRD.md、docs/feature-map.md、docs/domain-model.md、docs/data-model.md、docs/features/*/spec.md、docs/features/*/plan.md、docs/api-contracts.md、docs/Plan.md，生成 .sdd/tasks.json。不得重新发明 Feature 边界或验收标准。",
+  prompt: "项目路径：<active_project_path>\n项目类型：<web/mobile>\n\n读取 docs/PRD.md、docs/feature-map.md、docs/domain-model.md、docs/data-model.md、docs/features/*/spec.md、docs/features/*/plan.md、docs/api-contracts.md、docs/Plan.md、docs/ui-design-spec.md、docs/prototypes/（含 design-tokens.md），生成 .sdd/tasks.json。不得重新发明 Feature 边界或验收标准。Web 项目的前端/integration 任务：description 必须写明对应原型锚点（如 docs/prototypes/index.html#emp-consult），rules_files 必含 docs/ui-design-spec.md 与 docs/prototypes/design-tokens.md（视觉权威源，见 planner.md 的 rules_files 分配表），acceptanceCriteria 必含至少一条视觉对齐项。",
   subagent_type: "planner",
   run_in_background: false
 })
@@ -121,6 +121,10 @@ Planner 完成后，读取 `.sdd/tasks.json`，检查：
    - 如果任务对应已有前端页面或 `frontend/src/services/*`，必须有 `frontendIntegration.required=true`
    - acceptanceCriteria 必须包含 `VITE_USE_MOCK=false`、真实后端 API、页面无 `[Mock]` 或等价真实联调检查
    - 不能把“后续统一联调”作为该任务通过条件
+8. Web 项目的前端/integration 任务是否携带视觉权威源：
+   - `rules_files` 是否包含 `docs/ui-design-spec.md` 与 `docs/prototypes/design-tokens.md`（缺失 → 直接补上，不需重调 Planner）
+   - `description` 是否写明原型锚点路径（如 `docs/prototypes/index.html#emp-consult`，缺失 → 直接补上）
+   - `acceptanceCriteria` 是否至少含一条视觉对齐项、`technicalChecks` 是否含「样式取值与 design-tokens.md 一致」（缺失 → 直接补上）
 
 如果有问题，直接修正 tasks.json（不需要重新调 Planner）。
 
@@ -165,18 +169,39 @@ WHILE 存在未完成的任务 DO:
 
   2. 更新状态：status = "in_progress"
 
-  3. 调用 Developer 子智能体
+  3. 调用 Developer 子智能体（prompt 按任务 type 追加必读清单——前端/后端输入不同）
+
+     基础 prompt（所有任务通用）：
+     ```
      Task({
        description: "开发任务 [Task-ID]",
        prompt: "项目路径：<active_project_path>
-项目类型：<web/mobile>
-任务 ID：[Task-ID]
-任务详情：见 .sdd/tasks.json
-请读取 .sdd/experience.md 和任务中 rules_files 指定的规范文件。
-注意：rules_files 中的 dev-standards/... 必须解析到 harness-core/dev-standards/...。",
+     项目类型：<web/mobile>
+     任务 ID：[Task-ID]
+     任务详情：见 .sdd/tasks.json
+     请读取 .sdd/experience.md 和任务中 rules_files 指定的规范文件。
+     注意：rules_files 中的 dev-standards/... 与 specification/... 前缀必须解析到 harness-core/ 下对应路径；docs/... 前缀解析到当前项目目录。
+     <按任务 type 追加的必读清单，见下方分流规则>",
        subagent_type: "developer",
        run_in_background: false
      })
+     ```
+
+     **分流规则 A——任务 type = `frontend`，或 type = `integration` 且 `frontendIntegration.pages` 非空**，追加：
+
+     ```
+     本任务涉及前端页面，开工前必读视觉权威源（缺一不得写码）：
+     - docs/prototypes/ 下本任务页面对应的原型 section（锚点见任务 description，如 docs/prototypes/index.html#emp-consult；格式不限，HTML 原型同样必须打开对照）
+     - docs/prototypes/design-tokens.md（B2 权威取值表：色值/字号/圆角/间距逐项照抄，禁止近似值）
+     - docs/ui-design-spec.md（界面清单与关键 UX 规则）
+     布局、配色、间距、圆角、字体与全部文案以原型 + design-tokens.md 为唯一权威，禁止凭感觉近似或自由发挥。
+     ```
+
+     **分流规则 B——任务 type = `backend` 且不涉及前端页面**，追加：
+
+     ```
+     本任务为后端任务：对照 docs/api-contracts.md 与 docs/data-model.md 对应章节实现，遵守 rules_files 中 backend 分层规范（backend-dev / backend-layers / backend-plugin）。
+     ```
 
   4. Developer 返回后，更新状态：status = "testing"
 
@@ -299,6 +324,7 @@ Developer 产出的文件：[从 Developer 返回中提取文件列表]",
         - 读取 BUG 日志，确认这是第几次返工、历史上有哪些同类问题
         - 如果本轮问题与历史问题属于同类（如连续两次都是 lint / SDK 结构 / 字段命名），修复后必须在 .sdd/experience.md 中标注 [SYSTEM] 建议更新规则
         - 修复后严格对照 developer.md 的「输出前必查清单」逐项确认
+        - 若本任务涉及前端页面：修复时必须重新对照 docs/prototypes/ 对应原型 section 与 docs/prototypes/design-tokens.md 取值表核对视觉与文案，不得只改功能不改样式
         同时读取 .sdd/experience.md 和 rules_files 指定的规范文件。
         注意：rules_files 中的 dev-standards/... 必须解析到 harness-core/dev-standards/...。",
           subagent_type: "developer",
@@ -378,8 +404,9 @@ Task({
 任务 ID：[Task-ID]
 这是修复任务。测试报告在：.sdd/test-reports/test-[task-id].md
 请读取测试报告，理解 Tester 指出的具体问题，针对性修复。不要重写整个功能。
+若涉及前端页面：必须重新对照 docs/prototypes/ 对应原型 section 与 docs/prototypes/design-tokens.md 取值表核对视觉与文案。
 同时读取 .sdd/experience.md 和 rules_files 指定的规范文件。
-注意：rules_files 中的 dev-standards/... 必须解析到 harness-core/dev-standards/...。",
+注意：rules_files 中的 dev-standards/... 与 specification/... 前缀必须解析到 harness-core/ 下对应路径；docs/... 前缀解析到当前项目目录。",
   subagent_type: "developer",
   run_in_background: false
 })

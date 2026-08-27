@@ -48,13 +48,16 @@ Task 是未来供子智能体执行的技术工作单元。一个 Feature 可以
 ## 执行顺序
 
 ```text
-F1 从用户旅程提取候选 Feature
-→ F2 依据统一规则拆分 / 合并 Feature
-→ F3 建立 Feature Map 和依赖图
-→ F4 建立领域模型、状态机和数据责任矩阵
-→ F5 为每个 MVP Feature 生成 spec.md
-→ F6 Feature Ready 自检与用户门禁
+F1 从用户旅程提取候选 Feature（用户门禁：确认候选清单）
+→ F2 依据统一规则拆分 / 合并 Feature（用户门禁：确认拆分结果）
+→ F3 建立 Feature Map 和依赖图 ┐
+→ F4 建立领域模型、状态机和数据责任矩阵 ├ 连续生成：不向用户发起确认、不停等
+→ F5 为每个 MVP Feature 生成 spec.md（Draft）┘
+→ F6 Feature Ready 自检与总门禁：一次性提请验收
+→ 验收通过后，逐 Feature 将 Spec 状态定稿为 Ready，进入阶段 B1
 ```
+
+F1、F2 的用户门禁保持不变。F3 → F4 → F5 必须一口气连续生成：每步落盘后直接开始下一步，不插入总结确认，不逐个 Feature 停等。F3 之后到阶段结束，唯一用户门禁是 F6 总门禁。验收不通过时，按用户意见修改对应产物并重新提请验收，循环直至通过。
 
 ---
 
@@ -135,13 +138,14 @@ F-005 员工重置密码
 - 验收标准使用 `AC-F001-01` 格式
 - 文件夹使用 `F-001-user-login` 格式；slug 仅用于可读性，引用以 ID 为准
 
-**门禁**：先向用户展示候选 Feature 的拆分 / 合并结果。用户确认功能边界后，才能进入 F3。
 
 ---
 
 ## F3：Feature Map 与依赖图
 
 输出 `docs/feature-map.md`。
+
+本步无用户门禁：落盘后直接进入 F4，不提请确认。
 
 ### 固定结构
 
@@ -197,13 +201,15 @@ flowchart LR
 - 页面不能决定 Feature 边界
 - B1 的页面清单必须从已确认的 Feature 与用户旅程推导
 
-**门禁**：用户确认 Feature 总览、依赖和页面候选关系后，才能进入 F4。
+
 
 ---
 
 ## F4：领域模型、状态机与数据责任
 
 输出 `docs/domain-model.md`。
+
+本步无用户门禁：落盘后直接进入 F5，不提请确认。
 
 这一阶段定义业务对象的意义、关系、所有权和生命周期，不定义物理数据库字段。
 
@@ -265,7 +271,6 @@ stateDiagram-v2
 
 物理数据模型必须等全部 MVP Feature Spec 确认后，在阶段 C 由功能需求反推。
 
-**门禁**：用户确认领域对象、状态机、数据责任和跨 Feature 不变量后，才能进入 F5。
 
 ---
 
@@ -278,6 +283,8 @@ docs/features/F-001-user-login/spec.md
 ```
 
 V2+ Feature 可以只保留在 Feature Map；如果本轮不开发，不强制生成完整 Spec，但必须标明状态和延后理由。
+
+本步无用户门禁：全部 MVP Feature 的 spec.md 以 `Draft` 状态连续生成，不逐个呈现、不逐个确认，完成后直接进入 F6。
 
 ### spec.md 固定模板
 
@@ -415,7 +422,7 @@ V2+ Feature 可以只保留在 Feature Map；如果本轮不开发，不强制�
 - [ ] 没有物理表字段、API DTO 或内部代码方案越界
 - [ ] 没有 `TBD` 或无法执行的模糊表述
 
-每个 Feature Spec 应逐个呈现给用户确认。未经确认不得标记 `Ready`。
+Spec.md 全部以 `Draft` 状态生成，不逐个呈现给用户确认；确认动作统一并入 F6 总门禁。F6 验收通过后，逐 Feature 复核上述条件并将 `Spec 状态` 定稿为 `Ready`；验收不通过时，按意见修改后随下一轮验收重新提请。
 
 ---
 
@@ -429,7 +436,7 @@ V2+ Feature 可以只保留在 Feature Map；如果本轮不开发，不强制�
 - [ ] 跨 Feature 数据 Owner 唯一明确
 - [ ] 状态机转换有唯一业务动作来源
 - [ ] 每个 MVP Feature 都有 `spec.md`
-- [ ] 每个 MVP Feature Spec 状态均为 `Ready`
+- [ ] 每个 MVP Feature Spec 均满足 Spec Ready 规则的条件（当前为 `Draft`，验收通过后统一定稿为 `Ready`）
 - [ ] AC ID 在项目内唯一
 - [ ] 页面候选来自 Feature，页面结构没有改变 Feature 拆分边界
 - [ ] 未提前锁死数据库字段和 API DTO
@@ -441,7 +448,7 @@ V2+ Feature 可以只保留在 Feature Map；如果本轮不开发，不强制�
 
 - MVP Feature 数量：
 - V2+ Feature 数量：
-- Ready Spec：
+- 满足 Ready 条件的 Spec（当前均为 Draft，验收通过后定稿）：
 - 主要依赖链：
 - 核心领域对象：
 - 跨 Feature 状态机：
@@ -453,5 +460,11 @@ V2+ Feature 可以只保留在 Feature Map；如果本轮不开发，不强制�
 向用户发起：
 
 > Feature Map、Domain Model 和全部 MVP Feature Spec 已完成。请确认功能边界、依赖、数据责任和验收标准。确认后进入阶段 B1，根据 Feature 和 AC 设计页面与 UI 说明书。
+
+这是 F3 之后唯一的用户门禁：F3 → F4 → F5 的全部产物在本门禁一次性提请验收。
+
+**验收通过**：逐 Feature 将 `Spec 状态` 从 `Draft` 定稿为 `Ready`，并同步回写 `docs/feature-map.md` 总览表的 Spec 状态列，然后进入阶段 B1。
+
+**验收不通过**：用户意见 = 未通过。只修改意见涉及的产物（Feature Map、Domain Model 或相关 `spec.md`），重新落盘后再次发起本门禁。修改与确认可以多轮。
 
 未经用户确认，不得进入阶段 B1。
