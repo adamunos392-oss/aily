@@ -38,6 +38,7 @@ docs/
 C1 PRD 最终定稿
 → C2 从 Feature 数据责任反推 data-model.md
 → C3 从 Feature 流程与 AC 反推 api-contracts.md
+→ C3.5 回填 Feature Spec 契约追踪（spec.md 第 13 节）
 → C4 为每个 MVP Feature 生成 plan.md
 → C5 生成全局 Plan.md
 → C6 Traceability / Feature Ready 自检
@@ -200,6 +201,36 @@ PRD 继续作为产品层事实来源，不承载：
 - 禁止直接暴露内部实体；DTO 字段需要独立说明
 - Mock、前端类型、后端模型和测试都以本文档为契约来源
 - 禁止使用 `...`、`TBD` 或无法判定的占位符
+
+---
+
+## C3.5：回填 Feature Spec 契约追踪
+
+兑现阶段 F 在每个 `spec.md` 第 13 节「契约追踪」表留下的 `阶段 C 补充 | Pending` 占位承诺。C3 落盘 `api-contracts.md` 后立即执行；本步骤不发起用户确认、不新增停等点，回填结果随阶段 C 既有完成门禁一并审核。
+
+### 回填方法
+
+遍历全部 MVP `docs/features/*/spec.md` 第 13 节，逐 AC 回填三列：
+
+| 列 | 填法 |
+|---|---|
+| 数据模型 | 填 `data-model.md` 中该 AC 读 / 写 / 约束到的实体名（如 `accounts`、`tickets`），多个实体用顿号分隔；无实体参与填 `无` |
+| API 契约 | 从 `api-contracts.md` 各接口条目的「覆盖 AC」反查，填覆盖该 AC 的 `API-Fxxx-xx` 编号，多个编号用顿号分隔；纯前端 / 无接口 AC 填 `无（纯前端）` |
+| 状态 | `Pending` 置为 `Confirmed`，表示该 AC 的契约追踪已建立并核实 |
+
+### 回填规则
+
+- 只改第 13 节表格内容；不改 `spec.md` 其他章节，不新增、修改或弱化 AC
+- 实体名必须与 `data-model.md` 实体总览逐字一致；API 编号必须能在 `api-contracts.md` 中找到，且其「覆盖 AC」包含该行 AC
+- 某条 AC 涉及后端行为，但在 `api-contracts.md` 中找不到覆盖它的接口：停下报告用户（可能漏接口），禁止为凑表自造接口或自造编号
+- 判某 AC 为「无（纯前端）」必须有依据：`api-contracts.md` 已有该 AC 的明确「无 API」说明，或该 AC 的验收内容不含任何后端行为；如实标注，状态照常置 `Confirmed`，不得用「无（纯前端）」遮掩漏接口
+- 回填结果供 C4 各 Feature `plan.md` 第 1 节追踪信息直接引用
+
+### 回填自查
+
+- [ ] 全部 MVP `spec.md` 第 13 节无 `阶段 C 补充` 占位、无 `Pending` 残留
+- [ ] 每行 API 编号与实体名都能反向溯源到 `api-contracts.md` / `data-model.md`
+- [ ] 每个 `无（纯前端）` 都有明确依据
 
 ---
 
@@ -382,6 +413,7 @@ PRD 场景 / 业务规则
 - [ ] tech-spec 的选型与 config 键被 data-model、api-contracts、Plan 一致引用，未另设一套
 - [ ] 每个物理字段都有 Feature/AC 或 platform 来源
 - [ ] 每个 endpoint 都有 Feature/AC 来源
+- [ ] 每个 MVP AC 在 `spec.md` 第 13 节的契约追踪已回填：数据模型实体、`API-Fxxx-xx` 编号或「无（纯前端）」、状态 `Confirmed`，无「阶段 C 补充」占位或 `Pending` 残留
 - [ ] 每个 MVP Feature 都有 Ready Spec 和完整 Plan
 - [ ] 每条 auto AC 都有计划测试层级、路径和命令
 - [ ] manual / agent / external AC 没有被标记为确定性自动通过
@@ -398,13 +430,13 @@ PRD 场景 / 业务规则
 
 - Feature 交付顺序
 - 每个 Feature 的 Spec / Plan 状态
-- 数据与 API 契约追踪结果
+- 数据与 API 契约追踪结果（含各 Feature `spec.md` 第 13 节契约追踪回填）
 - AC → 测试映射覆盖率
 - 外部服务与降级项
 - 尚需人工判断的 AC
 
 发起：
 
-> 产品定义、Feature 架构、原型、数据模型、API 契约和 Feature Plan 已完成。请审核这些产物；确认后才可以使用 `/sdd-start` 让 Planner 生成任务状态机。
+> 产品定义、Feature 架构、原型、数据模型、API 契约和 Feature Plan 已完成，各 Feature `spec.md` 第 13 节契约追踪已回填。请审核这些产物（含契约追踪回填结果）；确认后才可以使用 `/sdd-start` 让 Planner 生成任务状态机。
 
 未经用户确认，不得进入开发阶段。
