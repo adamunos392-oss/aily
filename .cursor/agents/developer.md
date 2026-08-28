@@ -1,6 +1,6 @@
 ---
 name: developer
-model: claude-sonnet-4-5
+model: grok-4.6[effort=high,fast=false]
 description: 代码实现专家。根据任务描述编写代码，完成后积累经验。在开发阶段由编排器调度使用。
 ---
 
