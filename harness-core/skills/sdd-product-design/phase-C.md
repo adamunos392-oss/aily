@@ -254,12 +254,12 @@ Feature Plan 定义“如何实现已经确认的 Feature Spec”，不得修改
 
 ## 5. 开发规范引用
 
-- harness-core/dev-standards/frontend.md
-- harness-core/dev-standards/backend-dev.md
-- harness-core/dev-standards/backend-layers.md
-- AI Agent Feature 按需增加 backend-plugin.md
+- 规范集：harness-core/specification/<集名>/（集名=Plan.md 头部 specification: 声明，缺省 default）
+- 前端任务：specification/<集名>/frontend/（tech-stack / api-client / mock / style）+ shared/（env-policy / naming / security）
+- 后端任务：specification/<集名>/backend/（tech-stack / layers / api-design / error-handling）+ shared/（env-policy / naming / security）
+- AI Agent Feature 按需增加 specification/<集名>/backend/plugin.md
 
-只引用核心规范，不复制内容。
+只引用路径，不复制内容。
 
 ## 6. AC → 测试映射
 
@@ -309,6 +309,8 @@ Feature Plan 定义“如何实现已经确认的 Feature Spec”，不得修改
 ```markdown
 # 全局开发计划
 
+specification: default
+
 ## 1. Feature 交付总览
 
 | Feature | 用户结果 | 依赖 | Spec | Plan | 优先级 | 状态 |
@@ -350,6 +352,7 @@ Feature Plan 定义“如何实现已经确认的 Feature Spec”，不得修改
 ### Plan 维护规则
 
 - `docs/Plan.md` 是唯一的人类可读全局进度文件
+- 头部 `specification: <集名>` 行继承自 `docs/tech-spec.md` 头部声明（阶段 TS 中继，未声明 = `default`），是本项目规范集的权威记录；Planner 读取此行写入 `.sdd/tasks.json` 顶层 `specification` 字段
 - Feature `plan.md` 只描述实施方案，不记录运行进度
 - `.sdd/tasks.json` 是机器执行状态，由开发入口生成
 - 全局 Plan 的 Feature 状态必须与任务状态机同步，不得出现两套冲突事实

@@ -15,7 +15,7 @@
 2. 帮用户选择 / 创建 / 克隆项目
 3. 进入 `Projects_Repo/<project-id>/`
 4. 判断项目形态和状态
-5. 路由到场景对齐、产品设计、多 Agent 开发、功能升级或 Bugfix
+5. 路由到产品设计、多 Agent 开发、功能升级或 Bugfix
 6. 维护 `.sdd/` 项目状态和经验系统
 
 ---
@@ -57,7 +57,7 @@ E. 修复已有项目 Bug
 
 ### A. 新建项目
 
-1. 询问项目名称和项目类型（Web / 移动端 / 暂不确定）
+1. 询问项目名称、项目类型（Web / 移动端 / 暂不确定）和 GitHub 仓库地址（已有远程仓库就粘贴；还没有可跳过，稍后在首次推送前配置）
 2. 生成 `project-id`（英文小写短横线）
 3. 创建：
 
@@ -72,7 +72,7 @@ Projects_Repo/<project-id>/
 
 4. 从 Harness 模板复制项目运行脚手架和 `pycore/`；`.cursor/`、`.claude/`、`.codex/` 保留在 Harness 根目录，不复制进项目，避免规则漂移
 5. 初始化 `.sdd/project.json`、`.sdd/status.json`、`.sdd/experience.md`、`.sdd/work-log.md`
-6. 写入 `project-registry.json`
+6. 写入 `project-registry.json`：用户提供了仓库地址时写入 `repo_url` 并为项目配置 `git remote origin`（不推送）；未提供保持 null
 7. 进入项目工作区
 
 ### B. 从 GitHub 克隆项目
@@ -100,17 +100,16 @@ Projects_Repo/<repo-name>/
 
 1. 选择已有项目
 2. 用户描述新增 / 修改功能
-3. 先读取 `.cursor/skills/alignment/SKILL.md`，进行业务场景对齐
-4. 产出并确认 `docs/澄清文档/<feature-name>/01-alignment.md`
-5. 基于确认后的业务口径更新受影响的 `PRD.md`、Feature Map/Spec、Domain/Data Model、API 契约和 Feature/Global Plan
-6. Planner 只生成新增 / 变更任务
-7. 进入多 Agent 开发
+3. 追问澄清业务口径，获用户确认后再继续
+4. 基于确认后的业务口径更新受影响的 `PRD.md`、Feature Map/Spec、Domain/Data Model、API 契约和 Feature/Global Plan
+5. Planner 只生成新增 / 变更任务
+6. 进入多 Agent 开发
 
 ### E. Bugfix
 
 1. 选择已有项目
 2. 判断 Bug 是否涉及产品口径：按钮去留、权限、可见性、历史数据、默认行为、生成 / 保存 / 下载规则
-3. 如果涉及产品口径，先读取 `.cursor/skills/alignment/SKILL.md`，确认业务场景和验收口径
+3. 如果涉及产品口径，先与用户确认预期业务行为和验收口径，确认后再继续
 4. 再读取 `.cursor/skills/sdd-bugfix/SKILL.md`
 5. 执行经验回查、根因分析、修复、报告、经验更新
 
@@ -169,22 +168,16 @@ docs/features/*/plan.md
 
 ### 情况 A：Web 空白项目
 
-如果用户只提供了大段想法、模糊产品方向或复杂业务描述，先加载：
-
-```text
-.cursor/skills/alignment/SKILL.md
-```
-
-完成业务口径对齐后，再加载：
+如果用户只提供了大段想法、模糊产品方向或复杂业务描述，先在对话中追问澄清业务口径，获用户确认后再进入产品设计流程。加载：
 
 ```text
 .cursor/skills/sdd-product-design/SKILL.md
 ```
 
-进入产品设计流程：
+流程：
 
 ```text
-场景对齐（必要时）→ R → A → F → B1 → B2 → C
+R → A → F → B1 → B2 → C
 ```
 
 产出：
@@ -205,7 +198,7 @@ docs/prototypes/
 
 不得加载 `sdd-product-design` Skill。执行移动端门禁，要求用户补齐 `docs/` 输入材料。
 
-移动端可以使用 `alignment` 整理业务场景。进入开发前，用户仍需提供移动端产品定义、Feature Spec、原型、数据/API 契约和开发计划，并完成用户确认门禁。
+进入开发前，用户仍需提供移动端产品定义、Feature Spec、原型、数据/API 契约和开发计划，并完成用户确认门禁。
 
 ### 情况 C：设计文件齐全
 
@@ -217,34 +210,7 @@ docs/prototypes/
 
 ---
 
-## 第五步：场景对齐入口
-
-场景对齐是 PRD、技术合同、Planner 和 Bugfix 之前的业务口径层。
-
-当用户输入是大段想法、功能升级、业务型 Bug 或不带技术方案的需求整理时，读取：
-
-```text
-.cursor/skills/alignment/SKILL.md
-```
-
-默认输出：
-
-```text
-docs/澄清文档/<feature-name>/01-alignment.md
-```
-
-使用边界：
-
-- 只对齐业务目标、范围、场景、验收口径和关键问题
-- 不写数据库、接口字段、组件拆分、开发任务和实施顺序
-- Web 项目：对齐稿确认后可进入 `sdd-product-design`
-- 已有项目功能升级：对齐稿确认后先更新 Feature Map 和受影响 Feature Spec，再按追踪关系更新 Domain/Data Model、API 契约和 Feature/Global Plan
-- 产品口径型 Bugfix：对齐稿确认后再进入 `sdd-bugfix`
-- 移动端项目：对齐稿只作为业务材料，仍需用户自备移动端输入材料
-
----
-
-## 第六步：多 Agent 开发模式
+## 第五步：多 Agent 开发模式
 
 进入开发模式后，你成为编排器（Orchestrator），不负责编码，只协调子 Agent。
 
@@ -293,7 +259,7 @@ docs/澄清文档/<feature-name>/01-alignment.md
 
 ---
 
-## 第七步：三级经验系统
+## 第六步：三级经验系统
 
 经验分三层：
 

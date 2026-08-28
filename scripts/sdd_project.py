@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -62,7 +63,6 @@ def ensure_project_dirs(project_dir: Path) -> None:
         "docs",
         "docs/features",
         "docs/prototypes",
-        "docs/澄清文档",
     ]:
         (project_dir / rel).mkdir(parents=True, exist_ok=True)
 
@@ -79,6 +79,33 @@ def copy_harness(project_dir: Path) -> None:
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst)
+
+
+def run_git(project_dir: Path, *git_args: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", *git_args],
+            cwd=project_dir,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def configure_remote(project_dir: Path, repo_url: str) -> bool:
+    """Configure git remote origin for a newly created project.
+
+    Initializes a local git repository on demand (otherwise the git-workflow
+    skill would do it later), then points origin at repo_url. No first push.
+    """
+    if not (project_dir / ".git").exists():
+        if not run_git(project_dir, "init", "-b", "main"):
+            return False
+    if run_git(project_dir, "remote", "get-url", "origin"):
+        return run_git(project_dir, "remote", "set-url", "origin", repo_url)
+    return run_git(project_dir, "remote", "add", "origin", repo_url)
 
 
 def write_project_entrypoints(project_dir: Path) -> None:
@@ -231,8 +258,14 @@ def cmd_new(args: argparse.Namespace) -> None:
     project_dir = PROJECTS_ROOT / args.id
     project_dir.mkdir(parents=True, exist_ok=True)
     copy_harness(project_dir)
-    init_sdd_files(project_dir, args.id, args.name, args.type, "new", None)
-    register_project(args.id, args.name, args.type, "new", activate=True)
+    init_sdd_files(project_dir, args.id, args.name, args.type, "new", args.repo_url)
+    register_project(args.id, args.name, args.type, "new", repo_url=args.repo_url, activate=True)
+    if args.repo_url:
+        if configure_remote(project_dir, args.repo_url):
+            print(f"Git remote origin: {args.repo_url}")
+        else:
+            print(f"Repo URL recorded: {args.repo_url}")
+            print("Remote not configured (git unavailable); run inside the project: git remote add origin <url>")
     print(f"Project created: {project_dir}")
     print(f"Active project: {args.id}")
     print(f"active_project_path: Projects_Repo/{args.id}/")
@@ -273,6 +306,7 @@ def main() -> None:
     new.add_argument("id", help="project id, e.g. customer-service")
     new.add_argument("--name", required=True, help="human-readable project name")
     new.add_argument("--type", default="unknown", choices=["web", "mobile", "unknown"])
+    new.add_argument("--repo-url", default=None, help="optional remote repository URL; configures git remote origin (git init + git remote add, no push) and is written to the registry")
     new.set_defaults(func=cmd_new)
 
     use = sub.add_parser("use", help="Set active project")

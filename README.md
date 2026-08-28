@@ -34,11 +34,10 @@ SDD_V7_2/
 ├── HARNESS.md                       # Harness 使用规范
 ├── project-registry.json            # 项目注册表
 │
-├── harness-core/                    # 唯一真相源：agents / skills / dev-standards / protocols / specification
+├── harness-core/                    # 唯一真相源：agents / skills / protocols / specification
 │   ├── router.md
 │   ├── agents/
 │   ├── skills/
-│   ├── dev-standards/
 │   ├── protocols/
 │   └── specification/
 │
@@ -56,7 +55,6 @@ SDD_V7_2/
 ├── .cursor/                         # Cursor 适配层，所有文件只引用 harness-core
 │   ├── agents/
 │   ├── skills/
-│   ├── dev-standards/
 │   └── rules/
 │
 ├── templates/
@@ -127,8 +125,8 @@ Cursor 自动注入 Harness Router
   ├─ 进入 Projects_Repo/<project-id>/
   │
   ├─ 判断项目形态
-  │   ├─ Web：可走 alignment + sdd-product-design 全流程
-  │   └─ 移动端：警告缺少移动端规范，用户确认后继续，可选业务场景对齐
+  │   ├─ Web：可走 sdd-product-design 全流程
+  │   └─ 移动端：警告缺少移动端规范，用户确认后继续
   │
   ├─ 判断项目状态
   │   ├─ 缺产品定义 / Feature Spec / 技术方案 / 技术契约 / Plan → 产品设计或要求用户补齐
@@ -153,7 +151,7 @@ AGENTS.md
 harness-core/protocols/development-loop.md
 ```
 
-`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），场景对齐走 `harness-core/skills/alignment/SKILL.md`，Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
+`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
 
 Codex 子智能体配置：
 
@@ -198,24 +196,12 @@ V5 的 `.output/` 更像临时产物目录。V7_2 里：
 
 经验可以上升，但必须带证据和用户确认。
 
-### 4. 场景对齐层
-
-`alignment` 是 V7_2 的业务口径对齐层，位于 PRD、技术合同、Planner 和 Bugfix 之前。
-
-它负责把用户的大段想法、功能升级描述或产品口径型 Bug 整理成：
-
-```text
-docs/澄清文档/<feature-name>/01-alignment.md
-```
-
-它只写业务目标、范围、场景、验收口径和关键问题，不写技术方案、接口字段、组件拆分或开发任务。
-
-### 5. Web / 移动端分流
+### 4. Web / 移动端分流
 
 - Web 项目：可以走产品设计 Skill，按 `产品定义 → Feature Map/Spec → 原型 → 数据/API 契约 → Feature Plan/全局 Plan` 产出设计材料
 - 移动端项目：当前缺少移动端产品设计和开发 rules，必须警告并等待用户确认；用户需自行提供等价的产品定义、功能规格、原型、数据/API 契约和开发计划
 
-### 6. 产品定义与技术契约分层
+### 5. 产品定义与技术契约分层
 
 ```text
 PRD 产品定义
@@ -241,9 +227,8 @@ PRD 产品定义
 SDD V7_2 Harness
   → Project Registry
     → Projects_Repo/<project-id>
-      → Alignment
-        → docs + .sdd
-          → Product Design / Multi-Agent Development / Bugfix
-            → Experience Promotion
-              → Harness Evolution
+      → docs + .sdd
+        → Product Design / Multi-Agent Development / Bugfix
+          → Experience Promotion
+            → Harness Evolution
 ```

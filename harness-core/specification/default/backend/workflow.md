@@ -147,7 +147,7 @@ models/（Pydantic）→ db/models.py（ORM）→ repositories/
 ```
 □ python3.11 -m ruff check backend/src backend/tests 通过
 □ python3.11 -m mypy backend/src backend/tests 通过
-□ python3.11 -m pytest backend/tests 通过（如有新增/修改测试）
+□ python3.11 -m pytest backend/tests --timeout=120 通过（如有新增/修改测试；pytest-timeout 插件缺失先装再测，禁止裸跑，门禁见 backend/tech-stack.md「硬性禁止」）
 □ backend/tests 使用独立测试库或事务回滚；未对运行时业务库执行 drop_all / 清表；pytest 后真实库核心表与 seed 数据仍存在
 □ 涉及数据库字段 → 对照 docs/data-model.md 核对字段名、类型、约束及 Feature/AC 来源
 □ 涉及外部服务 → 至少执行1次真实调用，打印响应结构确认解析正确；HTTP 客户端显式 `trust_env=False`，未继承本机代理/证书/系统环境
@@ -230,7 +230,7 @@ models/（Pydantic）→ db/models.py（ORM）→ repositories/
 
 ## 测试纪律（测试库隔离，硬性禁止）
 
-- **测试数据库必须与运行时数据库物理隔离**：`backend/tests/*` 只能使用独立测试库、临时库或事务回滚夹具，禁止直接使用运行时业务库（如 `backend/data/customer_service.db`）。测试代码不得导入运行时 `src.db.session.engine` / `async_session_maker` 后执行 `Base.metadata.drop_all`、`drop_all()` 或等价清表操作。FastAPI 集成测试必须通过 `app.dependency_overrides[get_db]` 注入测试库 session；测试清理只能清理测试库。执行 `python3.11 -m pytest backend/tests` 后，必须确认真实业务库中的核心表和 seed 数据仍存在，防止“测试全绿但联调数据库被清空”。
+- **测试数据库必须与运行时数据库物理隔离**：`backend/tests/*` 只能使用独立测试库、临时库或事务回滚夹具，禁止直接使用运行时业务库（如 `backend/data/customer_service.db`）。测试代码不得导入运行时 `src.db.session.engine` / `async_session_maker` 后执行 `Base.metadata.drop_all`、`drop_all()` 或等价清表操作。FastAPI 集成测试必须通过 `app.dependency_overrides[get_db]` 注入测试库 session；测试清理只能清理测试库。执行 `python3.11 -m pytest backend/tests --timeout=120` 后，必须确认真实业务库中的核心表和 seed 数据仍存在，防止“测试全绿但联调数据库被清空”。
 
 ---
 

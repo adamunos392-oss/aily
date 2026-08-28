@@ -34,8 +34,9 @@
 ## 阶段规范引用
 
 - 产品设计阶段（R/A/F/B1/B2/C）：由 `sdd-product-design` Skill 驱动（`harness-core/skills/sdd-product-design/`）
-- 前端开发：`dev-standards/frontend.md`
-- 后端开发：`dev-standards/backend-dev.md`（总控）+ `dev-standards/backend-layers.md`（分层）+ `dev-standards/backend-plugin.md`（仅 AI Agent 项目）
+- 前端开发：`specification/<集名>/frontend/`（tech-stack / api-client / mock / style）+ `shared/` 纪律件（env-policy / naming / security）
+- 后端开发：`specification/<集名>/backend/`（tech-stack / workflow / layers / api-design / error-handling，AI Agent 项目加 plugin）+ `shared/` 纪律件（env-policy / naming / security）
+- 规范集与集名解析：`harness-core/specification/`（机制全文见其 README）；集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`
 
 ## 沟通风格
 

@@ -56,6 +56,9 @@ source .venv/bin/activate
 # 安装依赖（在虚拟环境激活后执行）
 python3.11 -m pip install -r requirements.txt
 
+# 质量工具链补装：pytest 执行门禁依赖（requirements.txt 未包含也必须装，见下方「硬性禁止」pytest 条款）
+python3.11 -m pip install pytest-timeout
+
 # 启动后端（从 backend/ 目录执行，PYTHONPATH=.. 让 pycore 可导入）
 cd backend
 PYTHONPATH=.. python3.11 -m uvicorn src.main:app --reload --host 127.0.0.1 --port 8099
@@ -75,6 +78,7 @@ PYTHONPATH=.. python3.11 -m uvicorn src.main:app --reload --host 127.0.0.1 --por
 - **数据库分层骨架必须使用 pycore 模板**：`db/models.py`、`db/session.py`、`api/deps.py` 必须从 `pycore/integrations/db/` 和 `pycore/api/` 复制模板后按需扩展，禁止从零手写 SQLAlchemy 基类或会话管理。
 - **业务代码目录固定为 `backend/src`**：后端业务代码统一放在 `backend/src/` 下，如 `backend/src/api/`、`backend/src/services/`、`backend/src/repositories/`、`backend/src/models/`、`backend/src/config/`、`backend/src/utils/`。不得要求项目在 `backend/` 根目录直接创建 `routes/`、`services/`、`repositories/` 等业务目录。（数据访问层目录名统一为 `repositories/`，与 layers.md 一致。）
 - **代码质量工具链必须配置且范围收敛**：新项目必须在项目根目录提供 `pyproject.toml`（含 ruff、mypy、pytest 配置），可从 `pycore/pyproject.toml` 复制后调整。项目级质量门禁只覆盖业务代码 `backend/src` 与 `backend/tests`（配置权威在本条；执行命令与提交前检查见 workflow.md「每个功能完成后」）。`pycore/` 是后端框架依赖，不纳入项目任务的 lint/typecheck/test 质量门禁；除非任务明确是维护 pycore 框架，否则不得用 `ruff check .`、`mypy .`、`pytest .` 作为后端验收命令。
+- **pytest 必须带 timeout 插件执行（硬门禁，禁止静默降级为裸跑）**：任何环节（Developer 自查 / Tester 验证 / 回归）执行 pytest 前，必须确认 `pytest-timeout` 插件已在当前项目虚拟环境就位，且命令必须带 `--timeout` 参数，统一写法 `python3.11 -m pytest backend/tests --timeout=120`。`120` 为单测试用例级超时秒数（正常单用例 <5s、带测试库夹具 5–30s、带真实外部服务调用 10–60s，120s 留 2 倍以上余量；重度外部联调用例可上浮至 `--timeout=300`，禁止无上限）。前置检查任选其一：`python3.11 -m pip show pytest-timeout`，或直接跑带 `--timeout` 的收集检查 `python3.11 -m pytest backend/tests --timeout=120 --collect-only -q`（插件缺失时 pytest 报 `unrecognized arguments: --timeout` 直接退出，不会执行任何测试用例）。插件缺失时的处理顺序：先在项目虚拟环境内自动安装 `python3.11 -m pip install pytest-timeout`（项目内依赖安装，Agent 权限范围内）；安装失败（无网络 / 权限不足）则停止测试并报告「缺 pytest-timeout，先装再测」，判定 BLOCKED，**禁止生成新的测试脚本、禁止执行任何不带 `--timeout` 的裸 pytest**。依据：历史实弹事故——无超时保护的 pytest 用例命中逻辑漏洞后内存无限膨胀，最终拖垮整机（内核强制重启）；带 timeout 后，死循环 / 挂起 / 膨胀型失控用例会在超时点被硬切成 fail，而不是拖死整机。注意 timeout 不是内存膨胀缺陷的唯一防线（几秒内爆内存的用例可能撑不到超时点）：Tester 静态检查测试脚本与被测代码时，必须警惕无终止条件的循环、无界集合增长（循环 append / 无上限查询结果全量入内存）模式，发现即按可疑项先小规模验证再全量跑。
 - **SQLite 路径必须规范化**：`.env` 可使用 `DATABASE_PATH=backend/data/customer_service.db` 这类项目根相对路径，但生成 SQLite URL 前必须解析为绝对路径，并自动创建父目录（`mkdir(parents=True, exist_ok=True)`），避免在 `cd backend` 真实启动路径下解析成 `backend/backend/...` 或报 `unable to open database file`。（数据库文件与上传目录的落点权威表见 `shared/env-policy.md`「存储落点」。）
 - **日志参数禁止与 Logger 接口冲突**：禁止用 `message=` 作为关键字参数传入 `logger.info/warning/error()`，与 Python `Logger.warning(msg, ...)` 第一个位置参数冲突。改用 `api_message=` / `error_msg=` / `detail=`。
 

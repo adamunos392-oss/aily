@@ -38,4 +38,4 @@ harness-core/agents/*.md
 harness-core/protocols/development-loop.md
 ```
 
-`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），场景对齐走 `harness-core/skills/alignment/SKILL.md`，Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
+`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。

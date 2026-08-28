@@ -228,7 +228,7 @@ Tester 不信任 Developer 的任何声明，独立验证所有验收标准。
 | 子智能体调用 | `Task` 工具 |
 | 子智能体定义 | `.cursor/agents/*.md` |
 | 通信中枢 | 项目文件系统（.sdd/） |
-| 开发规范 | `.cursor/dev-standards/*.mdc` |
+| 开发规范 | `harness-core/specification/<集名>/*.md`（rules_files 解析直达，无平台副本） |
 | 产品设计 | `.cursor/skills/sdd-product-design/` |
 | 命令入口 | `.cursor/commands/sdd-*.md` |
 

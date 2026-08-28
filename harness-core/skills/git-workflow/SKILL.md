@@ -94,12 +94,19 @@ git rev-parse --is-inside-work-tree
    git commit -m "chore: init repository with .gitignore"
    ```
 
+5. **关联远程仓库（如已记录 repo_url）**
+   读取 `.sdd/project.json` 或 `project-registry.json` 中的 `repo_url`（创建项目时用户提供并记录）：
+   - 有值且本地无 origin remote → `git remote add origin <repo_url>`
+   - origin 已存在 → 跳过
+   - 无记录 → 跳过，留待首次推送时按「推送流程·检查 Remote」处理
+
 ### 仓库配置检查（已有仓库时）
 
 - 检查是否有 `.gitignore`，没有则创建
 - 检查 Git 用户名/邮箱是否配置
 - 检查当前分支是否为 `main`（不是则提示）
 - 检查是否有未提交的修改（有则提醒用户）
+- 检查 origin remote 是否存在；缺失时读 `.sdd/project.json` / `project-registry.json` 的 `repo_url` 补配（`git remote add origin <repo_url>`）
 
 ---
 
@@ -174,10 +181,14 @@ git commit -m "{type}: {描述}
 git remote -v
 ```
 
-- **无 remote** → 提示用户添加远程仓库：
-  ```bash
-  git remote add origin <用户提供的仓库URL>
-  ```
+- **无 remote** → 先读 `.sdd/project.json` / `project-registry.json` 的 `repo_url`：
+  - 有记录 → `git remote add origin <repo_url>`，继续推送
+  - 无记录 → 向用户明确说明并给出两个选项（不得静默失败或空转）：
+    ```text
+    当前项目未配置远程仓库。请选择：
+    1. 提供 GitHub 仓库地址 → 现在配置（git remote add origin <url>，并回写 project.json / project-registry.json 的 repo_url）后推送
+    2. 改选「提交但不推送」→ 本次只提交本地，稍后再配置远程
+    ```
 - **有 remote** → 继续推送
 
 ### 推送规则
@@ -214,6 +225,7 @@ Developer Agent 在开始编码前必须执行：
 编排器在用户门禁确认后，根据用户选择执行：
 
 - 用户说「推送并继续」→ 调用本 Skill 执行提交 + 推送 → 进入下一个功能
+  - 项目无 remote 时按「推送流程·检查 Remote」处理：先查 repo_url 记录补配，仍无则当面问地址或让用户改选「提交但不推送」，不得静默失败
 - 用户说「提交但不推送」→ 执行提交 → 进入下一个功能
 - 用户说「继续」→ 不执行 Git 操作 → 进入下一个功能
 
@@ -239,9 +251,7 @@ Git 仓库已就绪
 - 分支: main
 - .gitignore: 已配置
 - 初始提交: {commit-hash}
-
-如需关联远程仓库：
-git remote add origin <你的仓库URL>
+- 远程仓库: origin → {repo_url（已记录并配置）| 未配置（repo_url 为 null，首次推送前提供地址执行 git remote add origin <url>）}
 ```
 
 ### 提交完成

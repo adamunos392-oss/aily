@@ -113,7 +113,7 @@ Planner 完成后，读取 `.sdd/tasks.json`，检查：
 
 1. 开发顺序是否符合 Plan.md 中的计划顺序
 2. 每个任务的 description 是否足够清晰
-3. `rules_files` 路径是否指向 `harness-core/dev-standards/` 下的实际文件（tasks.json 内仍可写成 `dev-standards/...`，但执行时必须解析到 `harness-core/dev-standards/...`）
+3. `rules_files` 解析校验：`rules_files` 中的 `specification/<集名>/...` 解析为 `harness-core/specification/<集名>/...`：集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`；解析后的规范文件不存在必须停下报出，禁止静默降级。`docs/...` 前缀解析为当前项目目录下的设计产物
 4. 每个任务的 `source_feature` 是否引用 Feature Map 中存在的 Feature ID
 5. 每个任务的 acceptanceCriteria 是否保留对应 Feature Spec 的 AC ID，且没有新增、扩大或弱化 AC
 6. dependencies 是否合理（无循环依赖，且不违背 Feature 依赖图）
@@ -180,7 +180,7 @@ WHILE 存在未完成的任务 DO:
      任务 ID：[Task-ID]
      任务详情：见 .sdd/tasks.json
      请读取 .sdd/experience.md 和任务中 rules_files 指定的规范文件。
-     注意：rules_files 中的 dev-standards/... 与 specification/... 前缀必须解析到 harness-core/ 下对应路径；docs/... 前缀解析到当前项目目录。
+     注意：rules_files 中的 specification/<集名>/... 解析为 harness-core/specification/<集名>/...：集名优先取 .sdd/tasks.json 顶层 specification 字段，字段缺失时读取当前项目 docs/tech-spec.md 头部 specification: 声明，均未声明回落 default；解析后的规范文件不存在必须停下报出，禁止静默降级。docs/... 前缀解析到当前项目目录。
      <按任务 type 追加的必读清单，见下方分流规则>",
        subagent_type: "developer",
        run_in_background: false
@@ -200,7 +200,7 @@ WHILE 存在未完成的任务 DO:
      **分流规则 B——任务 type = `backend` 且不涉及前端页面**，追加：
 
      ```
-     本任务为后端任务：对照 docs/api-contracts.md 与 docs/data-model.md 对应章节实现，遵守 rules_files 中 backend 分层规范（backend-dev / backend-layers / backend-plugin）。
+     本任务为后端任务：对照 docs/api-contracts.md 与 docs/data-model.md 对应章节实现，遵守 rules_files 中的 backend 规范件（tech-stack / layers / api-design / error-handling，AI Agent 任务含 plugin）。
      ```
 
   4. Developer 返回后，更新状态：status = "testing"
@@ -290,7 +290,7 @@ Developer 产出的文件：[从 Developer 返回中提取文件列表]",
        1. 暂存当前功能相关文件（排除 `.sdd/` 状态文件、`.env`等用户隐私文件）
        2. 生成 commit message：`{type}: {功能描述}\n\n- 任务: {Task-ID} {标题}`
        3. `git commit`
-       4. 检查 remote → 有则 `git push`，无则提示用户配置 remote
+       4. 检查 remote → 有则 `git push`；无则先读 `.sdd/project.json` / `project-registry.json` 的 `repo_url` 补配 origin 后推送；仍无 → 告知用户「未配置远程仓库」，提供地址现在配或改选「提交但不推送」，不得静默跳过
        5. 报告推送结果，然后进入下一个任务
 
      - **「提交但不推送」**：
@@ -326,7 +326,7 @@ Developer 产出的文件：[从 Developer 返回中提取文件列表]",
         - 修复后严格对照 developer.md 的「输出前必查清单」逐项确认
         - 若本任务涉及前端页面：修复时必须重新对照 docs/prototypes/ 对应原型 section 与 docs/prototypes/design-tokens.md 取值表核对视觉与文案，不得只改功能不改样式
         同时读取 .sdd/experience.md 和 rules_files 指定的规范文件。
-        注意：rules_files 中的 dev-standards/... 必须解析到 harness-core/dev-standards/...。",
+        注意：rules_files 中的 specification/<集名>/... 解析为 harness-core/specification/<集名>/...：集名优先取 .sdd/tasks.json 顶层 specification 字段，字段缺失时读取当前项目 docs/tech-spec.md 头部 specification: 声明，均未声明回落 default；解析后的规范文件不存在必须停下报出，禁止静默降级。docs/... 前缀解析到当前项目目录。",
           subagent_type: "developer",
           run_in_background: false
         })
@@ -406,7 +406,7 @@ Task({
 请读取测试报告，理解 Tester 指出的具体问题，针对性修复。不要重写整个功能。
 若涉及前端页面：必须重新对照 docs/prototypes/ 对应原型 section 与 docs/prototypes/design-tokens.md 取值表核对视觉与文案。
 同时读取 .sdd/experience.md 和 rules_files 指定的规范文件。
-注意：rules_files 中的 dev-standards/... 与 specification/... 前缀必须解析到 harness-core/ 下对应路径；docs/... 前缀解析到当前项目目录。",
+注意：rules_files 中的 specification/<集名>/... 解析为 harness-core/specification/<集名>/...：集名优先取 .sdd/tasks.json 顶层 specification 字段，字段缺失时读取当前项目 docs/tech-spec.md 头部 specification: 声明，均未声明回落 default；解析后的规范文件不存在必须停下报出，禁止静默降级。docs/... 前缀解析到当前项目目录。",
   subagent_type: "developer",
   run_in_background: false
 })
@@ -429,6 +429,7 @@ pending → in_progress → testing → passed ✅
 | 情况 | 处理 |
 |------|------|
 | Developer / Tester 报告项目内依赖缺失 | 编排器直接执行项目目录内的依赖安装命令（如 `npm install`、`pnpm install`、`pip install -r requirements.txt`、`uv sync`），然后重试当前任务或测试；不得要求用户手动确认 |
+| `pytest-timeout` 插件缺失（pytest 无法带 `--timeout` 执行） | 编排器在项目虚拟环境内执行 `pip install pytest-timeout` 后重试测试；安装失败则该测试验证判定 BLOCKED 并向用户报告「缺 pytest-timeout，先装再测」。任何情况下不得放行不带 `--timeout` 的裸 pytest，不得在插件缺失时生成新测试脚本（门禁全文见 `specification/default/backend/tech-stack.md`「硬性禁止」） |
 | 依赖安装需要全局安装、`sudo`、系统设置、密钥、付费资源或长期服务 | 暂停并向用户说明风险，由用户确认后继续 |
 | Tester 完整联调缺少外部服务 Key / 测试账号 / 权限 | 暂停并向用户索取；如果用户选择不提供，标记该能力为 Mock/fallback 降级验收，不得宣称完整联调通过 |
 | Tester 报告模糊（无法判定 PASS/FAIL） | 暂停并向用户展示问题，由用户决定 |

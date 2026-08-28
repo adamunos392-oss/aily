@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -20,6 +21,7 @@ FORBIDDEN_PATTERNS = [
     "Developer 不允许自行装包",
     "禁止安装依赖（列出需要的依赖命令即可）",
     "scenario-alignment",
+    "skills/alignment",
     "docs/需求文档",
     "harness-core/skills/scenario-alignment",
     "gpt-5.4",
@@ -36,15 +38,16 @@ REQUIRED_PATHS = [
     ROOT / ".codex" / "agents" / "tester.toml",
     ROOT / "harness-core" / "protocols" / "development-loop.md",
     ROOT / "harness-core" / "protocols" / "codex-subagents.md",
-    ROOT / "harness-core" / "skills" / "alignment" / "SKILL.md",
     ROOT / "harness-core" / "skills" / "sdd-product-design" / "phase-F.md",
     ROOT / ".cursor" / "skills" / "sdd-product-design" / "phase-F.md",
-    ROOT / "templates" / "project" / "docs" / "澄清文档",
 ]
 
 
 FORBIDDEN_PATHS = [
     ROOT / "templates" / "project" / "docs" / "需求文档",
+    ROOT / "templates" / "project" / "docs" / "澄清文档",
+    ROOT / "harness-core" / "skills" / "alignment",
+    ROOT / ".cursor" / "skills" / "alignment",
     ROOT / "harness-core" / "skills" / "scenario-alignment",
     ROOT / ".cursor" / "skills" / "scenario-alignment",
 ]
@@ -105,7 +108,7 @@ def scan_required_and_forbidden_paths() -> list[str]:
     return problems
 
 
-def scan_dev_standard_references() -> list[str]:
+def scan_specification_references() -> list[str]:
     problems: list[str] = []
     scan_roots = [
         ROOT / "AGENTS.md",
@@ -119,6 +122,8 @@ def scan_dev_standard_references() -> list[str]:
         ROOT / "scripts",
         ROOT / "templates",
     ]
+    spec_root = ROOT / "harness-core" / "specification"
+    spec_ref_pattern = re.compile(r"specification/([A-Za-z0-9][A-Za-z0-9_-]*)/([A-Za-z0-9_./-]+\.md)")
 
     for target in scan_roots:
         paths = [target] if target.is_file() else list(target.rglob("*")) if target.exists() else []
@@ -127,8 +132,13 @@ def scan_dev_standard_references() -> list[str]:
                 continue
             text = read_text(path)
             for line_no, line in enumerate(text.splitlines(), start=1):
-                if "harness-core/dev-standards/" in line and ".mdc" in line:
-                    problems.append(f"{path.relative_to(ROOT)}:{line_no} references core dev-standards .mdc")
+                for match in spec_ref_pattern.finditer(line):
+                    set_name, rel_path = match.group(1), match.group(2)
+                    if not (spec_root / set_name / rel_path).exists():
+                        problems.append(
+                            f"{path.relative_to(ROOT)}:{line_no} references missing spec file: "
+                            f"specification/{set_name}/{rel_path}"
+                        )
     return problems
 
 
@@ -174,7 +184,7 @@ def main() -> int:
     problems = []
     problems.extend(scan_forbidden_patterns())
     problems.extend(scan_required_and_forbidden_paths())
-    problems.extend(scan_dev_standard_references())
+    problems.extend(scan_specification_references())
     problems.extend(scan_project_platform_copies())
     problems.extend(scan_adapter_core_leakage())
 

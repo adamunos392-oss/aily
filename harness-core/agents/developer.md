@@ -14,8 +14,7 @@
 1. 读取 `.sdd/experience.md`，了解之前踩过的坑，避免重复犯错
 2. 读取任务描述（从传入的参数获取任务 ID，然后从 `.sdd/tasks.json` 提取该任务的 description）
 3. 读取 `.sdd/tasks.json` 中该任务的 `rules_files` 字段列出的所有规范文件，**严格遵守**其中的开发规则
-   - `rules_files` 中的 `dev-standards/...` 必须解析为 `harness-core/dev-standards/...`
-   - `rules_files` 中的 `specification/...` 必须解析为 `harness-core/specification/...`；`docs/...` 前缀解析为当前项目目录下的设计产物
+   - `rules_files` 中的 `specification/<集名>/...` 解析为 `harness-core/specification/<集名>/...`：集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`；解析后的规范文件不存在必须停下报出，禁止静默降级。`docs/...` 前缀解析为当前项目目录下的设计产物
    - 不要去项目目录或 `.cursor/` 下寻找规则副本
 4. 根据任务的 `source_feature` 读取对应 `docs/features/<feature-id>/spec.md` 和 `plan.md`，再读取 `docs/data-model.md`、`docs/api-contracts.md`，确保实现没有越过 Feature 边界且符合数据/API 契约
 5. 如果任务的 `externalServices` 非空，读取 `.sdd/tasks.json` 顶层 `external_services` 和 `docs/Plan.md` 的「外部服务与测试权限清单」，确认配置字段、降级策略和 Tester 联调权限
@@ -27,7 +26,7 @@
      - **所有页面文案（标题、副标题、按钮文字、提示语、空状态文案）必须与原型完全一致**
      - **所有布局、配色、间距、圆角、字体以原型 + design-tokens.md 为唯一权威**；**禁止凭感觉写文案或调整样式**，任何与原型不一致的实现都会被 Tester 判定为 FAIL
      - 如果原型中某处文案不清晰，优先参考 `docs/PRD.md` 中的页面描述，不得自行创造文案
-   - **后端任务（type = `backend`）**：读取 `docs/api-contracts.md` 对应 API 章节与 `docs/data-model.md` 对应表定义，按 rules_files 中的 backend 分层规范（backend-dev / backend-layers / backend-plugin）实现
+   - **后端任务（type = `backend`）**：读取 `docs/api-contracts.md` 对应 API 章节与 `docs/data-model.md` 对应表定义，按 rules_files 中的 backend 规范件（tech-stack / layers / api-design / error-handling，AI Agent 任务含 plugin）实现
 7. **Git 仓库检查**：读取 `harness-core/skills/git-workflow/SKILL.md`
    - 检查当前项目目录是否为 Git 仓库（`git rev-parse --is-inside-work-tree`）
    - 如果不是 → 初始化仓库（`git init -b main`），配置 `.gitignore`，创建初始提交
@@ -40,9 +39,9 @@
    - 确认日志使用 `pycore.core.get_logger()`，不是自己重写 `logger.py`
    - 确认 `backend/src/db/models.py` 和 `backend/src/db/session.py` 基于 `pycore/integrations/db/` 模板扩展
    - 确认 `backend/src/api/deps.py` 基于 `pycore/api/deps.py` 模板扩展
-   - 确认项目根目录有 `pyproject.toml`（含 ruff、mypy、pytest 配置），执行项目级质量门禁：`python3.11 -m ruff check backend/src backend/tests`、`python3.11 -m mypy backend/src backend/tests`、`python3.11 -m pytest backend/tests`
+   - 确认项目根目录有 `pyproject.toml`（含 ruff、mypy、pytest 配置），执行项目级质量门禁：`python3.11 -m ruff check backend/src backend/tests`、`python3.11 -m mypy backend/src backend/tests`、`python3.11 -m pytest backend/tests --timeout=120`（pytest 必须带 `--timeout` 执行；`pytest-timeout` 插件缺失时先在虚拟环境内 `pip install pytest-timeout`，装不上停报「缺 pytest-timeout，先装再测」，禁止裸跑——门禁全文见 `specification/default/backend/tech-stack.md`「硬性禁止」）
    - 确认 `backend/tests/*` 使用独立测试库、临时库或事务回滚夹具；禁止测试导入运行时 `src.db.session.engine` / `async_session_maker` 后执行 `drop_all` 或清空真实业务库
-   - 执行 `python3.11 -m pytest backend/tests` 后，如项目使用 SQLite，必须复查真实业务库核心表和 seed 数据仍存在
+   - 执行 `python3.11 -m pytest backend/tests --timeout=120` 后，如项目使用 SQLite，必须复查真实业务库核心表和 seed 数据仍存在
    - `pycore/` 是框架依赖，只检查是否被正确使用；除非任务明确是维护 pycore 框架，不得把 `pycore/` 纳入本项目 lint/typecheck/test 门禁
    - **若以上任一检查未通过，必须先修复基础设施，再开始功能开发**
 
@@ -62,12 +61,9 @@
 
 如果当前项目或任务属于移动端应用（App / 小程序 / iOS / Android / Flutter / React Native / uni-app）：
 
-1. **不得读取或套用 `harness-core/dev-standards/frontend.md`**，该文件只适用于 Web 前端（Vue 3 + TypeScript）
+1. **不得读取或套用 `harness-core/specification/<集名>/frontend/` 下的任何规范件**，该组规范只适用于 Web 前端（Vue 3 + TypeScript）
 2. 不得把移动端界面任务按 Web 页面目录、Vue 组件、Pinia、Vue Router 规范实现
-3. 只有明确属于后端 API / 后端服务的任务，才允许读取：
-   - `harness-core/dev-standards/backend-dev.md`
-   - `harness-core/dev-standards/backend-layers.md`
-   - `harness-core/dev-standards/backend-plugin.md`（仅 AI Agent 后端）
+3. 只有明确属于后端 API / 后端服务的任务，才允许读取其 `rules_files` 列出的 `specification/<集名>/backend/*` 与 `specification/<集名>/shared/*` 规范件（含 AI Agent 后端的 `backend/plugin.md`）
 4. 如果 `.sdd/tasks.json` 的 `rules_files` 与移动端项目形态冲突（例如移动端任务却要求读取 `frontend.md`），必须停止开发并报告编排器修正 tasks.json
 5. 移动端客户端开发规则必须以用户提供的 PRD、原型图、Plan.md 和项目现有技术栈为准；V7_2 当前不提供移动端专用 rules
 
@@ -111,7 +107,8 @@
    **后端任务：**
    - [ ] `python3.11 -m ruff check backend/src backend/tests` 通过（如有失败，先修复再返回）
    - [ ] `python3.11 -m mypy backend/src backend/tests` 通过（如有失败，先修复再返回）
-   - [ ] `python3.11 -m pytest backend/tests` 通过（如有新增测试，必须全部 green）
+   - [ ] `pytest-timeout` 插件已在当前虚拟环境就位（`pip show pytest-timeout` 或带 `--timeout` 的 collect 检查）；缺失先自动安装，安装失败停报「缺 pytest-timeout，先装再测」，禁止执行不带 `--timeout` 的裸 pytest（门禁见 `specification/default/backend/tech-stack.md`）
+   - [ ] `python3.11 -m pytest backend/tests --timeout=120` 通过（如有新增测试，必须全部 green）
    - [ ] 未把 `pycore/` 纳入项目任务的 lint/typecheck/test 质量门禁
    - [ ] `backend/tests/*` 未对运行时业务库执行 `drop_all` / 清表；FastAPI 测试通过 `app.dependency_overrides[get_db]` 或等价方式注入测试库 session
    - [ ] 运行 pytest 后，真实 SQLite 业务库中的核心表和 seed 用户仍存在，未被测试夹具污染

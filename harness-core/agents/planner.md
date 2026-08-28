@@ -55,6 +55,7 @@
 {
   "project": "项目名称（从 Plan.md 提取）",
   "project_type": "web / mobile / unknown",
+  "specification": "实际集名（从 docs/Plan.md 头部 specification: 行读出，未声明写 default）",
   "created": "生成日期",
   "source_files": {
     "prd": "docs/PRD.md",
@@ -102,7 +103,7 @@
       "externalServices": [],
       "dependencies": [],
       "priority": 1,
-      "rules_files": ["dev-standards/frontend.md"],
+      "rules_files": ["specification/<集名>/frontend/tech-stack.md", "specification/<集名>/frontend/api-client.md", "specification/<集名>/frontend/mock.md", "specification/<集名>/frontend/style.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md"],
       "status": "pending",
       "developer_id": null,
       "tester_id": null,
@@ -292,7 +293,7 @@
 - **认证/权限任务默认口径**：认证、鉴权、权限任务默认生成“路由级依赖”，不要生成“认证中间件已注册到 APIServer”作为验收标准。标准写法应是：`backend/src/api/deps.py` 基于 pycore 模板扩展、`get_current_user` / `require_admin` 等依赖函数实现认证与权限、受保护路由使用 `Depends(...)`、无凭证/无效凭证返回 401 统一错误格式、无权限返回 403、CORS 中间件已注册。只有需求明确要求全局拦截和 allowlist 时，才生成全局 AuthMiddleware 任务。
 - **拆分方式**：
   1. **引入 pycore 框架** — 确认 `pycore/` 已存在于项目根目录（与 `backend/` 并列），`backend/src/main.py` 基于 `pycore.api.APIServer` 创建，禁止自己重写 config/server/logger
-  2. **复制工具链配置** — 从 `pycore/pyproject.toml` 复制到项目根目录，确保 ruff、mypy、pytest 配置可用
+  2. **复制工具链配置** — 从 `pycore/pyproject.toml` 复制到项目根目录，确保 ruff、mypy、pytest 配置可用；虚拟环境内必须安装 `pytest-timeout`（pytest 执行门禁依赖，缺失时 Developer/Tester 不得执行 pytest，见 `specification/default/backend/tech-stack.md`「硬性禁止」）
   3. **配置加载与环境变量** — 基于 `pycore.core.ConfigManager` 创建 `backend/src/core/config.py`，所有敏感配置从 `.env` 读取，禁止硬编码密钥
   4. **数据库骨架** — 从 `pycore/integrations/db/models.py` 和 `pycore/integrations/db/session.py` 复制模板到 `backend/src/db/`，按需扩展业务模型
   5. **依赖注入骨架** — 从 `pycore/api/deps.py` 复制模板到 `backend/src/api/deps.py`，按需扩展路由级认证/权限依赖；认证依赖使用项目 `src.db.session.get_db`，不使用 pycore 模板默认 DB 会话
@@ -312,7 +313,7 @@
   - "真实 SQLite 文件存在，目标业务表和种子数据已落盘（不能只依赖测试夹具）"
   - "`GET /health` 返回 200"
 - **technicalChecks**：
-  - `python3.11 -m pytest backend/tests` 通过
+  - `python3.11 -m pytest backend/tests --timeout=120` 通过（pytest 必须带 `--timeout`，门禁见 `specification/default/backend/tech-stack.md`）
   - `cd backend && PYTHONPATH=.. python3.11 scripts/init_db.py` 通过（如有初始化脚本）
   - `cd backend && PYTHONPATH=.. python3.11 -m uvicorn src.main:app --host 127.0.0.1 --port <free-port>` 可短时启动
   - SQLite 数据库文件、目标表、seed 数据真实存在
@@ -379,21 +380,22 @@
 
 ### rules_files 分配
 
-路径统一使用 `dev-standards/` 前缀，指向 `harness-core/dev-standards/` 下的规范文件。
+规范文件统一从规范集引用：`rules_files` 使用 `specification/<集名>/...` 前缀（占位符，不写死集名），指向 `harness-core/specification/<集名>/` 下的规范件。生成 tasks.json 时：顶层必须写 `"specification": "<实际集名>"`（从 `docs/Plan.md` 头部 `specification:` 行读出，未声明取 `default`）；任务的 `rules_files` 保持 `specification/<集名>/...` 占位形式，由 Developer / Tester 按解析规则替换实际集名。`docs/` 前缀指向当前项目目录下的设计产物（视觉权威源）。
 
 #### Web 应用
 
 | 任务类型 | rules_files |
 |---------|------------|
-| 后端功能 | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md"]` |
-| 后端功能（AI Agent） | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md", "dev-standards/backend-plugin.md"]` |
-| 前端功能 | `["dev-standards/frontend.md", "specification/default/frontend/style.md", "specification/default/frontend/tech-stack.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md"]` |
-| 集成测试 | `["dev-standards/frontend.md", "specification/default/frontend/style.md", "specification/default/frontend/tech-stack.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md", "dev-standards/backend-dev.md"]` |
+| 后端功能 | `["specification/<集名>/backend/tech-stack.md", "specification/<集名>/backend/layers.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/backend/error-handling.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md"]` |
+| 后端功能（AI Agent） | `["specification/<集名>/backend/tech-stack.md", "specification/<集名>/backend/layers.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/backend/error-handling.md", "specification/<集名>/backend/plugin.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md"]` |
+| 前端功能 | `["specification/<集名>/frontend/tech-stack.md", "specification/<集名>/frontend/api-client.md", "specification/<集名>/frontend/mock.md", "specification/<集名>/frontend/style.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md"]` |
+| 集成测试 | `["specification/<集名>/frontend/tech-stack.md", "specification/<集名>/frontend/api-client.md", "specification/<集名>/frontend/mock.md", "specification/<集名>/frontend/style.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md", "docs/ui-design-spec.md", "docs/prototypes/design-tokens.md"]` |
+
+清单为按任务类型的精选（每个任务类型只挂它真正要遵守的件，控制上下文开销）：后端不挂 `backend/workflow.md`（流程总控由开发循环协议与 agent 定义承载）；前端不挂 `frontend/acceptance.md`（验收节奏由 Tester 清单与任务 `technicalChecks` 承载）；集成测试不挂后端 `tech-stack` / `layers` / `error-handling`（联调任务只验契约对齐，`backend/api-design.md` 足够）。`shared/security.md` 是最高优先级纪律，前后端任务一律保留。需要调整精选范围时改本表，不得在单个任务里临时增删。
 
 **rules_files 路径前缀解析**：
 
-- `dev-standards/...` → `harness-core/dev-standards/...`
-- `specification/...` → `harness-core/specification/...`
+- `rules_files` 中的 `specification/<集名>/...` 解析为 `harness-core/specification/<集名>/...`：集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`；解析后的规范文件不存在必须停下报出，禁止静默降级
 - `docs/...` → 当前项目目录下的设计产物（视觉权威源）
 
 **强制**：Web 项目前端功能与涉及前端页面的集成测试，`rules_files` 必含 `docs/ui-design-spec.md` 与 `docs/prototypes/design-tokens.md`，`description` 必含原型锚点路径——这是前端任务视觉不跑偏的上下文底线。
@@ -406,11 +408,11 @@
 |---------|------------|
 | 移动端界面/客户端功能 | `[]` |
 | 移动端状态管理/本地逻辑 | `[]` |
-| 后端 API 功能 | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md"]` |
-| 后端 AI Agent 功能 | `["dev-standards/backend-dev.md", "dev-standards/backend-layers.md", "dev-standards/backend-plugin.md"]` |
-| 移动端与后端集成 | 仅后端部分可读取 `backend-dev.md`，移动端部分 `rules_files=[]` |
+| 后端 API 功能 | `["specification/<集名>/backend/tech-stack.md", "specification/<集名>/backend/layers.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/backend/error-handling.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md"]` |
+| 后端 AI Agent 功能 | `["specification/<集名>/backend/tech-stack.md", "specification/<集名>/backend/layers.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/backend/error-handling.md", "specification/<集名>/backend/plugin.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md"]` |
+| 移动端与后端集成 | 后端部分按「后端 API 功能」行挂规范集件，移动端部分 `rules_files=[]` |
 
-**禁止**：移动端任务不得分配 `dev-standards/frontend.md`，因为该文件是 Vue 3 / Web 前端规范。
+**禁止**：移动端任务不得分配 `specification/<集名>/frontend/*`——该组是 Vue 3 / Web 前端栈绑定规范，对移动端无效。
 
 ## 输出格式
 

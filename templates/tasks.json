@@ -1,6 +1,7 @@
 {
   "project": "",
   "project_type": "unknown",
+  "specification": "default",
   "created": "",
   "source_files": {
     "prd": "docs/PRD.md",
@@ -37,7 +38,7 @@
       "externalServices": [],
       "dependencies": [],
       "priority": 1,
-      "rules_files": ["dev-standards/backend-dev.md", "dev-standards/backend-layers.md"],
+      "rules_files": ["specification/<集名>/backend/tech-stack.md", "specification/<集名>/backend/layers.md", "specification/<集名>/backend/api-design.md", "specification/<集名>/backend/error-handling.md", "specification/<集名>/shared/env-policy.md", "specification/<集名>/shared/naming.md", "specification/<集名>/shared/security.md"],
       "status": "pending",
       "developer_id": null,
       "tester_id": null,

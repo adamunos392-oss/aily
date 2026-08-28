@@ -20,7 +20,7 @@
 harness-core/protocols/development-loop.md
 ```
 
-`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），场景对齐走 `harness-core/skills/alignment/SKILL.md`，Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
+`sdd-start` / `sdd-new-project` / `sdd-align` / `sdd-bugfix` 命令已移除，由 Router 直接路由：开发循环走 `harness-core/protocols/development-loop.md`，新建项目走 `scripts/sdd_project.py new`（见 `harness-core/router.md`），Bugfix 走 `harness-core/skills/sdd-bugfix/SKILL.md`。
 
 ## Codex Subagents
 
@@ -65,7 +65,6 @@ Projects_Repo/<active_project_id>/
 - 技术方案（阶段 TS）：`harness-core/agents/solution-designer.md`（工作方法：`harness-core/skills/solution-design/SKILL.md`）
 - 产品设计：`harness-core/skills/sdd-product-design/SKILL.md`
 - Bugfix：`harness-core/skills/sdd-bugfix/SKILL.md`
-- 场景对齐：`harness-core/skills/alignment/SKILL.md`
 
 ## 禁止
 

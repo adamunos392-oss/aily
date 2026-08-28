@@ -56,7 +56,6 @@ Cursor entry files:
 .cursor/agents/*.md
 .cursor/commands/*.md
 .cursor/skills/**
-.cursor/dev-standards/*.mdc
 ```
 
 Cursor files are adapters. They must only point to `harness-core/`.

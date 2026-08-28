@@ -21,8 +21,8 @@ default 三组语义：`frontend/`、`backend/` 是栈绑定件（换集即整�
 
 1. **问**：B2 末尾确认进入 TS 时向用户问一句「本项目用默认规范集（default）还是自建规范集？」。用户不回答或没有自建集 = default，不阻塞确认。
 2. **记**：确认结果记到 `docs/Plan.md` 头部 metadata 行（`specification: <集名>`）——Plan.md 是唯一人类可读全局文件，此行为权威；`ui-design-spec.md` 头部同步记一行；`tech-spec.md` 头部同步记一行（阶段 TS 产物，Plan.md 生成前的中继声明，C5 生成 Plan.md 时继承）。
-3. **传**：Planner 生成 tasks.json 时从 Plan.md 头部读出集名，写入 tasks.json 顶层 `"specification"` 字段；任务的 `rules_files` 路径按 `specification/<集>/...` 参数化。
-4. **干活时读哪套**：Developer / Tester 解析 rules_files 时，`specification/<集>/...` → `harness-core/specification/<集>/...`；集名取 tasks.json 顶层字段，缺省 default。自建集放 `harness-core/specification/<集名>/`（全局放，跨项目复用）；引用的文件缺失必须停下报出，不得静默降级回 default。
+3. **传**：Planner 生成 tasks.json 时从 Plan.md 头部读出集名，写入 tasks.json 顶层 `"specification"` 字段；任务的 `rules_files` 路径按 `specification/<集名>/...` 占位形式书写（不写死集名），由执行端解析替换。
+4. **干活时读哪套**：Planner / Developer / Tester / 开发循环协议四处解析句完全同款——`specification/<集名>/...` 解析为 `harness-core/specification/<集名>/...`：集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`；解析后的规范文件不存在必须停下报出，禁止静默降级。自建集放 `harness-core/specification/<集名>/`（全局放，跨项目复用）。
 
 ## 条款元标准（写规范的规范）
 

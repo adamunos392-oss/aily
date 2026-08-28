@@ -8,7 +8,7 @@ description: SDD 产品设计全流程（R → A → F → B1 → B2 → TS → 
 
 你现在是产品设计助手，负责从竞品调研到 PRD 定稿的全流程。
 
-注意：本 Skill 不负责处理大段原始需求的业务口径对齐。如果用户输入仍然模糊、业务分支很多，或是已有项目功能升级，应先调用 `harness-core/skills/alignment/SKILL.md`，产出并确认 `docs/澄清文档/<feature-name>/01-alignment.md` 后，再进入本流程。
+注意：如果用户输入仍然模糊、业务分支很多，或是已有项目功能升级，先在对话中追问澄清业务目标、范围和验收口径，获用户确认后再进入本流程。
 
 核心技术栈：后端 Python 3.11+ / FastAPI / PyCore，前端 Vue 3 / TypeScript。
 
@@ -50,7 +50,7 @@ description: SDD 产品设计全流程（R → A → F → B1 → B2 → TS → 
 ## 阶段全景
 
 ```
-场景对齐（必要时）→ R（竞品调研）
+R（竞品调研）
 → A（产品定义：用户 / 场景 / 范围 / 业务规则 / MVP）
 → F（功能架构：Feature Map / Domain Model / Feature Spec）
 → B1（基于 Feature 的 UI 设计说明书）→ B2（原型设计）

@@ -23,7 +23,7 @@ Harness Router 负责：
 
 ## Active Project Path 强制规则
 
-任何产品设计、场景对齐、功能改动、Bugfix、代码开发、测试报告写入之前，必须先确定：
+任何产品设计、功能改动、Bugfix、代码开发、测试报告写入之前，必须先确定：
 
 ```text
 active_project_path = Projects_Repo/<active_project_id>/
@@ -53,7 +53,6 @@ docs/api-contracts.md        => <active_project_path>/docs/api-contracts.md
 docs/Plan.md                 => <active_project_path>/docs/Plan.md
 docs/features/               => <active_project_path>/docs/features/
 docs/prototypes/             => <active_project_path>/docs/prototypes/
-docs/澄清文档/               => <active_project_path>/docs/澄清文档/
 .sdd/tasks.json              => <active_project_path>/.sdd/tasks.json
 .sdd/experience.md           => <active_project_path>/.sdd/experience.md
 .sdd/test-reports/           => <active_project_path>/.sdd/test-reports/
@@ -71,7 +70,7 @@ mobile/                      => <active_project_path>/mobile/
 
 `scripts/sdd_project.py` 是 Harness Router 的内部工具，默认由 Agent 调用，不要求用户自己运行。
 
-- 用户要新建项目：Agent 代为运行 `python scripts/sdd_project.py new <id> --name "<name>" --type web|mobile|unknown`
+- 用户要新建项目：先向用户收集三项信息——项目名称、项目类型（web / mobile / unknown）、GitHub 仓库地址（已有远程仓库就粘贴；还没有可跳过，稍后在首次推送前配置）。然后 Agent 代为运行 `python scripts/sdd_project.py new <id> --name "<name>" --type web|mobile|unknown --repo-url "<url>"`。用户跳过仓库地址时不传 `--repo-url`（registry 的 repo_url 保持 null）；传入时脚本自动初始化本地 Git 仓库并配置 `git remote origin`，不做首次推送
 - 用户要切换项目：Agent 代为运行 `python scripts/sdd_project.py use <id>`
 - 用户问当前项目：Agent 代为运行 `python scripts/sdd_project.py current`
 - 用户要列项目：Agent 代为运行 `python scripts/sdd_project.py list`
@@ -83,6 +82,7 @@ mobile/                      => <active_project_path>/mobile/
 ```text
 active_project_id = <id>
 active_project_path = Projects_Repo/<id>/
+repo_url = <已配置的远程仓库地址，未配置时报告 null>
 ```
 
 ## Web / Mobile 门禁

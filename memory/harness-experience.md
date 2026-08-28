@@ -8,7 +8,7 @@
 ## 2026-05-11｜移动端项目不得套用 Web 产品设计与 Web Rules
 
 - **来源**：V5 → V6 架构升级讨论
-- **经验**：当前 Harness 的产品设计 Skill 和 `dev-standards/frontend.mdc` 都偏 Web。移动端项目可以复用多 Agent 协同机制，但不能默认触发 Web 产品设计 Skill，也不能读取 Vue/Web 前端 rules。
+- **经验**：当前 Harness 的产品设计 Skill 和前端规范（原 `dev-standards/frontend.mdc`，现 `specification/<集名>/frontend/`）都偏 Web。移动端项目可以复用多 Agent 协同机制，但不能默认触发 Web 产品设计 Skill，也不能读取 Vue/Web 前端 rules。
 - **规则**：
   - 移动端项目必须先警告用户当前缺少移动端规范
   - 用户确认继续后，要求用户自备 PRD / 原型 / API 契约 / Plan
@@ -93,3 +93,56 @@
 - **类型**：对齐/业务规则
 - **经验**：转人工可用性误用员工级 `hasTicket(employeeId)`，与「同一会话最多一张工单」冲突，导致有历史工单的员工在新会话无法转人工
 - **规则**：Mock/前端 `can_escalate` 必须绑定 `conversation.ticket_id`，禁止用员工全局工单数禁用当前会话转人工；Tester 用「有历史工单 + 新进行中会话」用例覆盖转人工可用
+
+## 2026-08-28｜Mock 对话页必须实现本地发送/转人工状态机
+
+- **来源**：service-robot T-002 Tester 验证
+- **类型**：重复/对齐
+- **经验**：Mock 阶段将发送/转人工留空为 alert，且 query 场景缺 rag，导致多条 AC 无法通过静态+交互验证。第 2 轮仅调整左栏顺序后，Outlook 时间仍因 `formatTime(updated_at)` 显示 09:40，与原型 09:12 不符。
+- **规则**：Developer 完成 EmployeePage 一类对话 Mock 时必须实现本地 `handleSend`/`handleTransfer` 状态机，并覆盖 tasks.json 列出的全部 `?state=` 场景（含 rag）；禁止以 alert 代替 Mock 交互。对照原型验收左栏时间时，必须静态计算 `formatTime` 输出并与原型逐字比对；须反推应使用的 UTC 字段（`created_at` / `claimed_at` / `closed_at` / `updated_at`），不得只核对 Mock 字段字面量或只改数组顺序。坐席端处理中分组应用 `claimed_at`（如原型「今天 14:08」），不要误用 `created_at`。
+
+## 2026-08-28｜backend 脚本必须在 `PYTHONPATH=..` 下能导入 `src`
+
+- **来源**：service-robot T-007 Tester 验证
+- **类型**：框架/脚手架
+- **经验**：`cd backend && PYTHONPATH=.. python3 scripts/init_db.py` 时 `sys.path[0]` 是 `scripts/`，项目根只有 `pycore` 没有 `src`，导致 `ModuleNotFoundError: No module named 'src'`。配置路径若按项目根写 `backend/.env` 也会在 backend cwd 下解析错。
+- **规则**：要求 `cd backend && PYTHONPATH=..` 的脚本必须把 `backend/`（脚本的上一级）插入 `sys.path`，数据和 `.env` 相对 `backend/` 解析；禁止注释写一种 CWD、实现假设另一种。
+
+## 2026-08-28｜uvicorn 启动必须调用 init_config，不得只靠 pytest 夹具
+
+- **来源**：service-robot T-010 Tester 验证
+- **类型**：框架/对齐
+- **经验**：`src.main` 未调用 `init_config()` 时，真实 uvicorn 下依赖 `get_db`/`get_settings` 的路由 HTTP 500，而 pytest 夹具注入配置造成假阳性。
+- **规则**：后端 integration 合并前必须用文档规定的 uvicorn 命令做一次真实 POST 冒烟；`main.py` 启动路径必须 `init_config()`；Tester 不得仅依赖 ASGITransport + dependency_overrides 判 PASS。相对路径必须统一相对 `backend/` cwd（与 init_db 一致），禁止再写 `Path("backend")/data/...`，否则 uvicorn 从 backend 启动时意图规则文件找不到，RAG 会误报 llm_unavailable。
+
+## 2026-08-28｜错误必须扁平信封；切片循环必须有终止条件
+
+- **来源**：service-robot T-011 Tester 验证
+- **类型**：框架/规范
+- **经验**：`HTTPException(detail=dict)` 被 FastAPI 包成 `{"detail":{...}}`，与 api-contracts `{code,message,data}` 及前端解析不一致。短文档 `split_into_chunks`  overlap>=step 时死循环，真实百炼抽 QA 成功后入库挂起。
+- **规则**：在 `main.py` 注册异常 handler，错误 JSON 必须是 `{code,message,data}`。字符切片必须保证前进（step>0 且 overlap<chunk_size），短文本也要能结束。
+
+## 2026-08-28｜.env 多行模板必须单行，FTS 不得用改写标题
+
+- **来源**：service-robot T-012 Tester 验证
+- **类型**：对齐/重复
+- **经验**：`.env` 多行 `QUERY_REWRITE_TEMPLATE` 未加引号时 dotenv 只读首行 `## 意图`，FTS5 把 `#` 当语法导致检索失败，整条 RAG 误报 llm_unavailable。
+- **规则**：多行模板写入 `.env` 必须单行 `\n` 或引号包裹；真实 RAG 验收须断言 rewrite/query 长度大于标题首行；FTS5 查询使用用户原问题，改写失败回退原文。
+
+## 2026-08-28｜RAG 后置画像不得拖垮已生成答案；FTS 必须转义
+
+- **来源**：service-robot T-012 Tester 验证
+- **类型**：重复/对齐
+- **经验**：`intent_rules.json` 的 `profile_issue_domain_rules` 是列表，代码却调用 `.items()`，检索+生成成功后崩溃，整段被 catch 成 `llm_unavailable`。用户问题含 `.` 时 FTS5 语法错误同样拖垮 pipeline。profile/FTS 修好后，`no_knowledge` 仍不可达：0.3 向量阈值无法过滤 0.4+ 弱相关切片，库外问题仍走 `rag` 并可能编造答案。
+- **规则**：真实联调验收 RAG 必须用一条不命中 QA 直出的问题断言 `reply_kind=rag`。profile/后置步骤异常不得吞掉已生成答案。FTS MATCH 须转义或隔离失败；配置 JSON 结构必须与遍历代码一致。验收 `no_knowledge` 必须用库外具体问题断言 `reply_kind=no_knowledge`（不能只 mock 空检索）；向量阈值须用真实 embedding 分数标定。
+
+## 2026-08-28｜integration 双端页面必须各自退出 Mock
+
+- **来源**：service-robot T-014 Tester 验证
+- **类型**：对齐
+- **经验**：`frontendIntegration.pages` 含 `/employee` 与 `/agent` 时，Developer 只把 EmployeePage 转人工接到真实 API，AgentPage 待接列表仍走 Mock，AC 要求坐席端看见新单无法在 `VITE_USE_MOCK=false` 下成立。
+- **规则**：Tester 必须逐页检查 `frontendIntegration.pages`；任一页默认仍走 Mock 则 FAIL。Developer 不得把对端页面推迟到后续任务，除非 tasks.json 明确 defer。
+
+
+
+

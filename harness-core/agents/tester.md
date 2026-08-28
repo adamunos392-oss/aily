@@ -140,7 +140,7 @@
 
 ### 第二步补充 D：测试数据库隔离验证（后端强制）
 
-如果当前任务涉及 `backend/tests`、SQLite、数据库初始化、认证登录、真实后端联调或执行了 `python3.11 -m pytest backend/tests`，Tester 必须验证测试不会破坏运行时业务库：
+如果当前任务涉及 `backend/tests`、SQLite、数据库初始化、认证登录、真实后端联调或执行了 `python3.11 -m pytest backend/tests --timeout=120`，Tester 必须验证测试不会破坏运行时业务库：
 
 1. 静态检查 `backend/tests/*`：禁止测试文件直接导入运行时 `src.db.session.engine` / `async_session_maker` 后执行 `Base.metadata.drop_all`、`drop_all()` 或等价清表操作。
 2. FastAPI 集成测试必须通过 `app.dependency_overrides[get_db]` 或等价机制注入测试库 session；测试库文件名/路径必须与运行时业务库不同。
@@ -157,7 +157,7 @@
 | 后端服务可启动 | `uvicorn main:app` 或等价命令能启动并保持监听 | BLOCKED（服务启动失败） |
 | 数据库可连接 | 能读取/写入测试数据 | BLOCKED（数据库异常） |
 | 运行实例一致性 | 监听端口的进程与当前代码版本一致 | BLOCKED（旧进程/端口占用） |
-| 测试依赖就绪 | pytest 收集阶段无 ERROR | BLOCKED（测试环境配置缺陷） |
+| 测试依赖就绪 | `pytest-timeout` 插件在位（缺失时先在项目虚拟环境内自动 `pip install pytest-timeout`；安装失败 = BLOCKED「缺 pytest-timeout，先装再测」，不得裸跑），且带 `--timeout` 的收集检查（`python3.11 -m pytest backend/tests --timeout=120 --collect-only -q`）无 ERROR | BLOCKED（测试环境配置缺陷；插件装不上时报告必须写明「缺 pytest-timeout，先装再测」） |
 
 **阻塞时的报告要求**：
 - 结果写 `BLOCKED`，不写 `FAIL`
@@ -170,7 +170,7 @@
 ### 第四步：对照规范文件
 
 读取 `.sdd/tasks.json` 中该任务的 `rules_files` 字段列出的规范文件，检查：
-- `rules_files` 中的 `dev-standards/...` 必须解析为 `harness-core/dev-standards/...`
+- `rules_files` 中的 `specification/<集名>/...` 解析为 `harness-core/specification/<集名>/...`：集名优先取 `.sdd/tasks.json` 顶层 `specification` 字段，字段缺失时读取当前项目 `docs/tech-spec.md` 头部 `specification:` 声明，均未声明回落 `default`；解析后的规范文件不存在必须停下报出，禁止静默降级。`docs/...` 前缀解析为当前项目目录下的设计产物
 - 不要去项目目录或 `.cursor/` 下寻找规则副本
 - 代码是否符合规范中的强制要求
 - 分层是否正确（没有反向依赖）
@@ -352,10 +352,10 @@ Orchestrator 会在收到 FAIL 报告后读取此章节，并追加到 `<harness
 - **允许自动安装项目内依赖并运行短时验证命令**：如果 lint/typecheck/test 因 `node_modules`、`.venv`、项目本地依赖缺失而失败，先在对应项目目录执行 `npm install`、`pnpm install`、`pip install -r requirements.txt`、`uv sync` 等项目本地安装命令，再重试验证；不得要求用户手动安装
 - **禁止长期运行服务器或后台进程**；需要启动服务时只能做短时验证，完成后关闭
 - **禁止自己写代码来"修复"问题**（只报告问题）
-- **后端验证范围收敛**：后端项目级验证默认只覆盖 `backend/src` 和 `backend/tests`，命令为 `python3.11 -m ruff check backend/src backend/tests`、`python3.11 -m mypy backend/src backend/tests`、`python3.11 -m pytest backend/tests`。`pycore/` 是框架依赖，只验证项目是否正确使用 pycore；除非任务明确是维护 pycore 框架，不得因为 `pycore/` 自身 lint/typecheck/test 问题判定当前项目 FAIL。
+- **后端验证范围收敛**：后端项目级验证默认只覆盖 `backend/src` 和 `backend/tests`，命令为 `python3.11 -m ruff check backend/src backend/tests`、`python3.11 -m mypy backend/src backend/tests`、`python3.11 -m pytest backend/tests --timeout=120`。pytest 一律带 `--timeout` 执行（`pytest-timeout` 缺失先装再测，装不上 BLOCKED 停报，禁止裸跑——门禁全文见 `specification/default/backend/tech-stack.md`「硬性禁止」）；静态检查测试脚本时警惕无终止循环与无界集合增长，可疑用例先小规模验证再全量跑。`pycore/` 是框架依赖，只验证项目是否正确使用 pycore；除非任务明确是维护 pycore 框架，不得因为 `pycore/` 自身 lint/typecheck/test 问题判定当前项目 FAIL。
 - **真实运行路径验证**：数据库、启动、脚本、配置类后端任务必须从 `backend/` 目录执行一次真实短时验证，例如 `cd backend && PYTHONPATH=.. python3.11 scripts/init_db.py` 和 `cd backend && PYTHONPATH=.. python3.11 -m uvicorn src.main:app --host 127.0.0.1 --port 8099`。如果 8099 被占用，可临时使用其他冷门端口，但报告中必须写明；单元测试 PASS、ORM model 存在、测试夹具 PASS，均不能替代真实脚本/服务运行 PASS。
 - **真实数据库落盘验证**：涉及 SQLite、模型、seed 数据的任务，Tester 必须检查真实数据库文件，而不是只看 ORM 定义。至少验证目标表存在；如任务要求种子数据，必须查询真实表记录（例如 `users.username = 'zhangsan'`）。若真实 DB 未创建、表不存在或 seed 未落盘，应判 FAIL。
-- **测试数据库隔离验证**：执行 `python3.11 -m pytest backend/tests` 后，Tester 必须确认测试只清理测试库，不清理运行时业务库。若发现 `backend/tests/*` 使用运行时 `engine` / `async_session_maker` 执行 `drop_all` 或真实库表在 pytest 后消失，即使 pytest 全绿也必须判 FAIL，并要求改为独立测试库、临时库、事务回滚或 `app.dependency_overrides[get_db]` 注入测试 session。
+- **测试数据库隔离验证**：执行 `python3.11 -m pytest backend/tests --timeout=120` 后，Tester 必须确认测试只清理测试库，不清理运行时业务库。若发现 `backend/tests/*` 使用运行时 `engine` / `async_session_maker` 执行 `drop_all` 或真实库表在 pytest 后消失，即使 pytest 全绿也必须判 FAIL，并要求改为独立测试库、临时库、事务回滚或 `app.dependency_overrides[get_db]` 注入测试 session。
 - **认证/权限验收口径**：PyCore 的认证、鉴权、权限控制默认按路由级依赖验收，不按全局认证中间件验收。Tester 可以检查 `CORSMiddleware` 是否在 `app.user_middleware` 中，但不得要求 `app.user_middleware` 出现 AuthMiddleware/AuthenticationMiddleware，除非任务明确要求全局认证拦截和公开接口 allowlist。认证任务应通过受保护路由或测试路由验证：无凭证返回 401、无效凭证返回 401、有效凭证可通过并解析当前用户；权限任务应通过依赖函数（如 `require_admin`）验证无权限返回 403。静态检查 `deps.py` 必须使用 `from src.db.session import get_db`，不得使用 `pycore.integrations.db.session.get_db` 作为项目运行时 DB 会话。
 - **减负原则**：Developer 已在输出中声明 `python3.11 -m ruff check backend/src backend/tests` / `python3.11 -m mypy backend/src backend/tests` / `npm run lint` 通过且附带命令输出时，Tester 只需抽检新增/修改文件，不必重复全量验证。Tester 的核心价值是功能验收、真实联调和规范对齐，不是当 lint 守门员。
 - 每条验收标准必须明确给出 PASS 或 FAIL，不要模棱两可
