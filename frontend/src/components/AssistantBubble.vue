@@ -130,9 +130,13 @@ function attendeeLine(confirmation: ConfirmationSummary): string {
       <span class="tag tag-ok">核验成功</span>
       <p>会议已创建。</p>
       <p>
-        时间：明天下午 15:00<br />
-        参会人：张明（产品部）、林小北<br />
-        主题：项目复盘会
+        时间：{{ turn.assistant_message.confirmation?.meeting_time ?? "明天下午 15:00" }}<br />
+        参会人：{{
+          turn.assistant_message.confirmation
+            ? attendeeLine(turn.assistant_message.confirmation)
+            : "张明（产品部）、林小北"
+        }}<br />
+        主题：{{ turn.assistant_message.confirmation?.topic ?? "项目复盘会" }}
       </p>
     </template>
 

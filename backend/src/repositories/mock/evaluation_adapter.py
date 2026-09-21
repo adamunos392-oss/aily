@@ -39,6 +39,12 @@ class EvaluationAdapter:
             raise ValueError("评测案例条数必须等于 EVALUATION_CASE_COUNT_EXPECTED")
         return cases
 
+    async def get_case(self, case_id: str) -> EvaluationCase | None:
+        for item in await self.list_cases():
+            if item.case_id == case_id:
+                return item
+        return None
+
     def _cases(self) -> list[EvaluationCase]:
         refuse_query = self._settings.knowledge_refuse_demo_query
         create_skill = self._settings.create_meeting_skill_id
@@ -66,7 +72,7 @@ class EvaluationAdapter:
                     _event("eval-qa-travel", "turn-eval-qa-travel", 3, t1, "router", "路由到企业知识", ""),
                     _event("eval-qa-travel", "turn-eval-qa-travel", 4, t1, "rag_retrieve", "知识检索", ""),
                     _event("eval-qa-travel", "turn-eval-qa-travel", 5, t1, "citation_validate", "引用核验通过", ""),
-                    _event("eval-qa-travel", "turn-eval-qa-travel", 6, t1, "final", "最终结果", ""),
+                    _event("eval-qa-travel", "turn-eval-qa-travel", 6, t1, "final", "最终已回复", ""),
                 ],
             ),
             EvaluationCase(
@@ -173,7 +179,7 @@ class EvaluationAdapter:
                 bad_case_category="none",
                 trace_events=[
                     _event("eval-rooms", "turn-eval-rooms", 1, t7, "router", "只读查询", ""),
-                    _event("eval-rooms", "turn-eval-rooms", 2, t7, "tool_call", "查询会议室", ""),
+                    _event("eval-rooms", "turn-eval-rooms", 2, t7, "result_validate", "未出现确认", ""),
                     _event("eval-rooms", "turn-eval-rooms", 3, t7, "final", "未创建会议", ""),
                 ],
             ),

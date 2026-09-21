@@ -7,7 +7,12 @@ from pycore.core import Logger, LoggerConfig, LogLevel, get_logger
 from starlette.requests import Request
 
 from src.api.envelope import failure
-from src.api.routes import conversations_router, identity_router
+from src.api.routes import (
+    confirmations_router,
+    conversations_router,
+    evaluation_cases_router,
+    identity_router,
+)
 from src.core.config import settings
 from src.db.session import close_db, init_db
 from src.plugins.registry import register_agent_plugins
@@ -40,6 +45,8 @@ server.on_shutdown(close_db)
 
 server.include_router(identity_router)
 server.include_router(conversations_router)
+server.include_router(confirmations_router)
+server.include_router(evaluation_cases_router)
 
 app = server.app
 
@@ -52,6 +59,10 @@ def _validation_message(exc: RequestValidationError) -> str:
             return "limit 必须在 1 到 100 之间"
         if "title" in loc or "title 必须是字符串或 null" in msg:
             return "title 必须是字符串或 null"
+        if "content" in loc or "content 不能为空" in msg:
+            return "content 不能为空"
+        if "updates" in loc or "updates 不能为空" in msg:
+            return "updates 不能为空"
     return "参数验证失败"
 
 

@@ -69,6 +69,20 @@ class SlotAdapter:
             duration = str(self._settings.meeting_default_duration_minutes)
         meeting_type = previous_slots.get("meeting_type") or self._settings.meeting_default_type
 
+        needs_disambiguation = bool(
+            person_name in text and not (isinstance(selected, str) and selected) and attendees
+        )
+        if selected == _PRODUCT_CHOICE_ID:
+            attendees = [
+                f"{person_name}（{self._settings.mock_user_department}）",
+                self._settings.mock_user_display_name,
+            ]
+        elif selected == _FINANCE_CHOICE_ID:
+            attendees = [
+                f"{person_name}（财务部）",
+                self._settings.mock_user_display_name,
+            ]
+
         slots: dict[str, SlotValue] = {
             "meeting_time": meeting_time,
             "attendees": attendees,
@@ -86,9 +100,6 @@ class SlotAdapter:
         if not topic:
             missing.append("topic")
 
-        needs_disambiguation = bool(
-            person_name in text and not slots["selected_person_id"] and attendees
-        )
         is_complete = not missing and not needs_disambiguation
 
         current = SlotState(slots=slots, missing_required=missing, is_complete=is_complete)
@@ -121,13 +132,14 @@ class SlotAdapter:
             return previous
         return None
 
+    def normalize_meeting_time(self, text: str, previous: SlotValue) -> str | None:
+        return self._extract_time(text, previous)
+
     def _extract_topic(self, text: str, previous: SlotValue) -> str | None:
         if "复盘" in text:
             return "项目复盘会"
         if isinstance(previous, str) and previous:
             return previous
-        if "会议" in text or "开会" in text:
-            return "会议"
         return None
 
     def _extract_attendees(

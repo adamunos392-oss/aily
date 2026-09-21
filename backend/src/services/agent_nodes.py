@@ -3,15 +3,16 @@
 from src.core.config import AppSettings, settings
 from src.models.agent.types import (
     AssistantMessage,
+    Citation,
     ConversationRuntimeState,
     EntrySource,
-    EvaluationCase,
     IntentResult,
     KnowledgeTableRow,
     MeetingRoomItem,
     MemoryState,
     QueryContext,
     RagAdapterResult,
+    ReportDraft,
     ResultValidationOutcome,
     RewriteResult,
     RiskPermissionResult,
@@ -21,7 +22,6 @@ from src.models.agent.types import (
     ToolCall,
     ToolResult,
 )
-from src.repositories.mock.evaluation_adapter import EvaluationAdapter
 from src.repositories.mock.intent_adapter import IntentAdapter
 from src.repositories.mock.rag_adapter import RagAdapter
 from src.repositories.mock.rewrite_adapter import RewriteAdapter
@@ -67,11 +67,15 @@ class MemoryService:
 
 
 class RiskPermissionService:
+    def __init__(self, app_settings: AppSettings | None = None) -> None:
+        self._settings = app_settings if app_settings is not None else settings
+
     async def check(self, intent: IntentResult) -> RiskPermissionResult:
+        identity = f"{self._settings.mock_user_display_name}｜{self._settings.mock_user_department}"
         return RiskPermissionResult(
             allowed=True,
             operation_type=intent.operation_type,
-            summary="写操作已通过风险与权限检查",
+            summary=f"写入操作 · 当前身份{identity}",
         )
 
 
@@ -125,6 +129,18 @@ class SkillService:
             results.append(await self._tools.execute(call, query))
         return results
 
+    def compose_weekly_report(
+        self,
+        query: QueryContext,
+        tool_results: list[ToolResult],
+        memory: MemoryState | None,
+    ) -> ReportDraft:
+        return self._adapter.compose_weekly_report(
+            query,
+            tool_results,
+            memory if memory is not None else MemoryState(),
+        )
+
 
 class ResultValidationService:
     def __init__(self, app_settings: AppSettings | None = None) -> None:
@@ -144,19 +160,25 @@ class ResultValidationService:
                 result_status="unknown",
                 assistant_message=AssistantMessage(
                     message_type="meeting_unknown",
-                    text="最终未知，未创建会议。",
+                    text="已确认的会议信息仍保留，但系统未在约定等待内得到确定成功。",
                 ),
             )
         if route.route_type == "RAG":
             return self._validate_rag(rag)
         if route.route_type == "READ_TOOL":
+            rooms = self._rooms_from_tools(tool_results)
+            text = (
+                "明天下午 15:00 以后可用的会议室："
+                if rooms
+                else "该时段没有可用会议室。"
+            )
             return ResultValidationOutcome(
                 status="replied",
                 result_status="success",
                 assistant_message=AssistantMessage(
                     message_type="room_list",
-                    text="可用会议室如下。",
-                    rooms=self._rooms_from_tools(tool_results),
+                    text=text,
+                    rooms=rooms,
                 ),
             )
         if skill is not None:
@@ -166,48 +188,59 @@ class ResultValidationService:
             result_status="refused",
             assistant_message=AssistantMessage(
                 message_type="refusal",
-                text="未找到可靠企业知识依据，无法回答。",
+                text="以上内容基于公司内部知识。如有特殊情况请咨询行政部门。",
             ),
         )
 
     def _validate_rag(self, rag: RagAdapterResult | None) -> ResultValidationOutcome:
+        refuse = ResultValidationOutcome(
+            status="refused",
+            result_status="refused",
+            citation_valid=False,
+            citations=[],
+            assistant_message=AssistantMessage(
+                message_type="refusal",
+                text="以上内容基于公司内部知识。如有特殊情况请咨询行政部门。",
+            ),
+        )
         if rag is None or rag.hit_count == 0:
-            return ResultValidationOutcome(
-                status="refused",
-                result_status="refused",
-                citation_valid=False,
-                citations=[],
-                assistant_message=AssistantMessage(
-                    message_type="refusal",
-                    text="未找到可靠企业知识依据，无法回答。",
-                ),
-            )
+            return refuse
         min_score = self._settings.rag_min_score
         scores = rag.scores or [min_score] * rag.hit_count
         if any(score < min_score for score in scores):
-            return ResultValidationOutcome(
-                status="refused",
-                result_status="refused",
-                citation_valid=False,
-                citations=[],
-                assistant_message=AssistantMessage(
-                    message_type="refusal",
-                    text="未找到可靠企业知识依据，无法回答。",
-                ),
-            )
+            return refuse
         rows = [
             KnowledgeTableRow(level="P1-P3", city_type="一线城市", limit_cny=800),
             KnowledgeTableRow(level="P1-P3", city_type="其他城市", limit_cny=600),
             KnowledgeTableRow(level="P4 及以上", city_type="一线城市", limit_cny=1200),
         ]
+        answer_ids = {"know-travel-p1-tier1", "know-travel-reimburse"}
+        selected = [item for item in rag.hits if item.knowledge_entry_id in answer_ids]
+        if len(selected) < 2:
+            selected = list(rag.hits)
+        mapped: list[Citation] = []
+        for item in selected:
+            if item.knowledge_entry_id == "know-travel-p1-tier1":
+                mapped.append(
+                    item.model_copy(update={"excerpt": "一线城市 P1-P3 住宿标准不超过 800 元/晚。"})
+                )
+            elif item.knowledge_entry_id == "know-travel-reimburse":
+                mapped.append(
+                    item.model_copy(update={"excerpt": "差旅住宿以职级与城市类型对照表执行。"})
+                )
+            else:
+                mapped.append(item)
         return ResultValidationOutcome(
             status="replied",
             result_status="success",
             citation_valid=True,
-            citations=list(rag.hits),
+            citations=mapped,
             assistant_message=AssistantMessage(
                 message_type="knowledge_table",
-                text="差旅住宿标准如下。",
+                text=(
+                    "根据企业差旅管理制度，为您查询到住宿标准：\n\n"
+                    "以上标准适用于公司正式员工的商务差旅，实际报销以发票和公司差旅制度为准。"
+                ),
                 table_rows=rows,
             ),
         )
@@ -221,7 +254,7 @@ class ResultValidationService:
                 result_status="unknown",
                 assistant_message=AssistantMessage(
                     message_type="meeting_unknown",
-                    text="最终未知，未创建会议。",
+                    text="已确认的会议信息仍保留，但系统未在约定等待内得到确定成功。",
                 ),
             )
         if skill.confirmation is not None:
@@ -240,6 +273,7 @@ class ResultValidationService:
                 result_status="success",
                 assistant_message=AssistantMessage(
                     message_type="report_draft",
+                    text=skill.text or "已命中技能：生成工作周报。按固定步骤生成本周周报，事实来自本轮工作消息。",
                     report_draft=skill.report_draft,
                 ),
             )
@@ -297,11 +331,3 @@ class ResultValidationService:
                 if isinstance(row, dict):
                     rooms.append(MeetingRoomItem.model_validate(row))
         return rooms
-
-
-class EvaluationService:
-    def __init__(self, adapter: EvaluationAdapter | None = None) -> None:
-        self._adapter = adapter if adapter is not None else EvaluationAdapter()
-
-    async def list_cases(self) -> list[EvaluationCase]:
-        return await self._adapter.list_cases()

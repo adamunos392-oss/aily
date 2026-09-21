@@ -26,6 +26,11 @@ class ConversationRepository:
         result = await self.db.execute(stmt)
         return int(result.scalar_one())
 
+    async def get_by_id(self, conversation_id: str) -> Conversation | None:
+        stmt = select(Conversation).where(Conversation.conversation_id == conversation_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_by_id_for_user(self, conversation_id: str, user_id: str) -> Conversation | None:
         stmt = select(Conversation).where(
             Conversation.conversation_id == conversation_id,
@@ -73,6 +78,16 @@ class ConversationRepository:
         stmt = select(Confirmation).where(
             Confirmation.conversation_id == conversation_id,
             Confirmation.status == "pending",
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_confirmation(
+        self, conversation_id: str, confirmation_id: str
+    ) -> Confirmation | None:
+        stmt = select(Confirmation).where(
+            Confirmation.conversation_id == conversation_id,
+            Confirmation.confirmation_id == confirmation_id,
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

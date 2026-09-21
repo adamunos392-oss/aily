@@ -6,12 +6,12 @@ specification: default
 
 | Feature | 用户结果 | 依赖 | Spec | Plan | 优先级 | 状态 |
 |---|---|---|---|---|---|---|
-| F-001 | 独立对话上下文与身份 | 无 | features/F-001-conversation-context/spec.md | features/F-001-conversation-context/plan.md | MVP | Ready |
-| F-002 | 企业知识有据问答与拒答 | F-001 | features/F-002-enterprise-knowledge-qa/spec.md | features/F-002-enterprise-knowledge-qa/plan.md | MVP | Ready |
-| F-003 | Skill 创建会议（含确认/超时/作废） | F-001 | features/F-003-create-meeting/spec.md | features/F-003-create-meeting/plan.md | MVP | Ready |
-| F-004 | 生成本周周报并可编辑 | F-001 | features/F-004-weekly-report/spec.md | features/F-004-weekly-report/plan.md | MVP | Ready |
-| F-005 | 查询可用会议室 | F-001 | features/F-005-meeting-room-query/spec.md | features/F-005-meeting-room-query/plan.md | MVP | Ready |
-| F-006 | Demo 验证台对照（非员工产品功能） | 无 | features/F-006-evaluation-cases/spec.md | features/F-006-evaluation-cases/plan.md | Demo Validation | Ready |
+| F-001 | 独立对话上下文与身份 | 无 | features/F-001-conversation-context/spec.md | features/F-001-conversation-context/plan.md | MVP | Done 2026-09-21 |
+| F-002 | 企业知识有据问答与拒答 | F-001 | features/F-002-enterprise-knowledge-qa/spec.md | features/F-002-enterprise-knowledge-qa/plan.md | MVP | Done 2026-09-21 |
+| F-003 | Skill 创建会议（含确认/超时/作废） | F-001 | features/F-003-create-meeting/spec.md | features/F-003-create-meeting/plan.md | MVP | Done 2026-09-21 |
+| F-004 | 生成本周周报并可编辑 | F-001 | features/F-004-weekly-report/spec.md | features/F-004-weekly-report/plan.md | MVP | Done 2026-09-21 |
+| F-005 | 查询可用会议室 | F-001 | features/F-005-meeting-room-query/spec.md | features/F-005-meeting-room-query/plan.md | MVP | Done 2026-09-21 |
+| F-006 | Demo 验证台对照（非员工产品功能） | 无 | features/F-006-evaluation-cases/spec.md | features/F-006-evaluation-cases/plan.md | Demo Validation | Done 2026-09-21 |
 
 员工侧 MVP 产品 Feature：F-001～F-005。F-006 不计入员工产品 Feature，但必须随 Demo 交付。
 
@@ -73,6 +73,6 @@ specification: default
 
 ## 7. 最终回归与交付
 
-- 跨 Feature E2E：工作台走完 S-001～S-007；单独打开 `/demo/evaluation` 核验 AC-F006-05
-- 启动文档：Agent 端口 5199/8099；用户验收端口 5175/8003
-- 部署前检查：`MOCK_MODE=true`；员工导航无评测；超时文案无「会议已创建」
+- 跨 Feature E2E：工作台走完 S-001～S-007；单独打开 `/demo/evaluation` 核验 AC-F006-05。命令：`cd frontend && npx playwright test e2e/ --timeout=120000`
+- 启动文档：`docs/startup.md`。Agent 端口 5199/8099；用户验收端口 5175/8003
+- 部署前检查：`MOCK_MODE=true`；员工导航无评测；超时成功节点无「会议已创建」（banner「未确认会议已创建」不是成功）

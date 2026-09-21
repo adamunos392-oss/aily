@@ -4,7 +4,8 @@ import vue from "@vitejs/plugin-vue";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const backendTarget = env.VITE_BACKEND_PROXY_TARGET || "http://localhost:8099";
+  const backendTarget =
+    process.env.VITE_BACKEND_PROXY_TARGET || env.VITE_BACKEND_PROXY_TARGET || "http://localhost:8099";
   const wsTarget = backendTarget.replace(/^http/, "ws");
 
   return {

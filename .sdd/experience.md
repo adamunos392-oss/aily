@@ -39,12 +39,43 @@
 - **经验**：在项目 `core/config.py` 用 `DotEnvFileLoader`（`dotenv_values`，不读 `os.environ`）`register_loader` 后 `load(..., use_env=False)`。`main.py` 只用 `pycore.api.APIServer`；`GET /health` 来自 APIServer 内置，不必自建。`get_current_user` 返回 config 中的林小北｜产品部，无 JWT。业务表/Plugin/conversations API 留给后续任务。
 - **避坑**：质量门禁只跑 `backend/src` 与 `backend/tests`，不要 `ruff/mypy/pytest` 扫 `pycore/`。venv 用 `python3.12 -m venv backend/.venv`，命令统一 `python3.12`。`.env.example` 与 `.env` 键一一对应；VITE_* 留在 `frontend/.env`，不要混进后端。
 
-### T-004: SQLite 数据库模型与种子数据
-- **陷阱**：`cd backend && PYTHONPATH=.. python3.12 scripts/init_db.py` 时 `sys.path[0]` 是 `scripts/`，项目根只有 `pycore` 没有 `src`。测试若对运行时 `engine` 做 `drop_all` 会清掉 `backend/data/aily.db` 的 seed。
-- **经验**：脚本把 `backend/` 插入 `sys.path` 后用 `src.*` 导入。`create_all_tables(bind)` 与 `seed_database(session)` 接受外部引擎/会话，测试用 `tmp_path` 独立库。seed 按业务 ID upsert，可重复执行；超时演示对话只 upsert 那一行，不插 meetings。差旅限额/职级/城市写进 knowledge excerpt，拒答问句不得出现在 is_active 条目中。
-- **避坑**：质量门禁用 `backend/.venv/bin/python` 从项目根跑 ruff/mypy/pytest；mypy 必须带上项目 `pyproject.toml` 的 exclude，不要对 pycore 绝对路径做 mypy。真实库落盘后再跑 pytest，确认 12 张表和 seed 还在。
+### T-006: F-001 对话上下文功能闭环
+- **陷阱**：pycore `success_response` 实际字段是 `success/data/error`，aily `api-contracts.md` 与前端 `unwrapEnvelope` 要的是 `{code, message, data}`。`HTTPException(detail=...)` 会被 FastAPI 包成 `{detail: ...}`。`get_db` 若不在 yield 后 commit，POST 新建对话下一请求看不到。
+- **经验**：项目内用 `src/api/envelope.py` 调 pycore 再映射扁平信封；在 `main.py` 注册 `RequestValidationError` handler。ConversationRepository 所有查询带 `user_id`。详情里 `active_slot_state` / `active_confirmation` 只取当前 `conversation_id`。`VITE_USE_MOCK=false` 时 identity/conversations 走 `services/*` 真实 `/api`；工作台三栏与原型文案不重写。测试用 `tmp_path` 独立库 + `dependency_overrides[get_db]`。
+- **避坑**：不要覆盖 `WorkbenchPage.vue` / `DemoEvaluationPage.vue` 整页。limit/title 校验必须返回 400 与契约原文，不能用 FastAPI 默认 422。8099 上已有 uvicorn 时改用空闲端口做短时启动，不要杀 5199 Vite。
 
 ### T-005: Agent PluginRegistry 与 Mock Adapter 基础设施
 - **陷阱**：`src.services.__init__` 若 re-export `AgentOrchestratorService`，会形成 `plugins.registry → plugins.nodes → services.agent_nodes → services.__init__ → agent_orchestrator → plugins.registry` 循环导入，TestClient 收集阶段即失败。
 - **经验**：Plugin 经 Service 调 Adapter；Orchestrator 只按固定名单 `execute`，不要用 `to_specs()` 做开放规划。READ 分支跳过 `risk_permission`，且 adapter/编排都不得追加 `confirmation` 节点。`register_agent_plugins` 必须幂等，否则多个 TestClient startup 会 PluginError。
 - **避坑**：质量门禁用 `backend/.venv/bin/python`；mypy 异构 Plugin 列表要标 `list[BasePlugin]`。静态检查「未引入开放规划」只扫 `import/from langgraph|langchain`，不要扫中文禁令注释。
+
+### T-007: F-002 企业知识问答功能闭环
+- **陷阱**：`citations.turn_id` 有外键。Turn 与 Citation 同一 flush 时 SQLite 会 `FOREIGN KEY constraint failed`。
+- **经验**：`self.db.add(turn)` 后先 `await self.db.flush()`，再写 citations / trace_events。拒答与有据答案文案、引用 excerpt 按 `01-workbench.html#qa-success/#qa-refuse` 写，不要用契约示例里的短句。
+- **避坑**：Mock 关闭后必须真正 `GET /turns/{id}` 填 `turnMap`，否则中栏只有摘要气泡看不到表格。历史夹具轮次没有 payload 时 hydrate 要吞掉 404，不能让 bootstrap 整页失败。
+
+### T-008: F-005 会议室查询功能闭环
+- **陷阱**：空会议室验收（AC-F005-03）不能靠新 config 键；对整份 Turn JSON 做「会议已创建」子串断言会误伤原型句「已回复 · 未创建会议」。
+- **经验**：空列表用 pytest `monkeypatch.setattr(ToolAdapter, "demo_rooms", lambda self: [])`。中栏文案对齐 `#rooms` / `#rooms-empty`；过程标题用原型「路由 / 原子能力 / 已回复 · 未创建会议」，不要用契约示例里的「完成」。只读查询不得写 confirmations/meetings。
+- **避坑**：默认种子仍是星河 3 号 / 启航厅。空结果只测 assistant 正文，不要扫整个 blob。BR-013 保留改写/槽位/记忆/结果核验真实步骤，不按原型 4 步裁掉。
+
+### T-009: F-003 创建会议 Skill 功能闭环
+- **陷阱**：create_turn 若不落库 pending confirmation，前端同意会 404。`开会` 不能当成主题，否则「帮我跟张明开个会」不会缺 topic。槽位摘要若先判断同名、再判断缺失，澄清轮会误显示「时间已填」。
+- **经验**：pending 确认单在 Turn flush 后写入 confirmations；同意只对 pending 跑 people_lookup→calendar_check→meeting_create。超时对话 ID 走 timeout，不插 meetings。PATCH slots 必须先作废旧 pending（每对话仅一条 pending）。中栏文案对齐 `#meeting-clarify/#meeting-disambiguate/#meeting-confirm/#meeting-success/#meeting-timeout`。
+- **避坑**：执行任务快捷入口会带上 `choice_id=person:zhangming-product`，跳过消歧直接待确认，规则仍与自然语言确认/成功相同。侧栏 limit=20 可能挤掉「会议超时演示」，应用 `MEETING_TIMEOUT_DEMO_CONVERSATION_ID` 直达。超时 banner「未确认会议已创建」含子串，不要当成功。
+
+### T-010: F-004 周报生成与编辑功能闭环
+- **陷阱**：Skill.plan 若在取消息前写死草稿，monkeypatch 本轮 Tool 结果不会进入正文，AC-F004-02 会 FAIL。GET 若只读 turns.assistant_payload_json，PATCH 后刷新会回到生成稿。
+- **经验**：`work_message_fetch` 后再 compose：过滤 `kind=chitchat`，抽取 `kind=work`，套 Memory 的简洁中文事项列表。pending 草稿落 `report_drafts`；PATCH 同时改表与 payload，GET 以表为准。中栏文案对齐 `#report`。记忆 payload 只允许 template_style/language/length。
+- **避坑**：周报是 READ，不要 risk_permission/confirmation。侧栏点「生成周报」会发到当前对话，测 AC-01 先「新建对话」。BR-013 保留改写/记忆/过滤/抽取/润色真实步骤，不按原型 4 步裁掉。
+
+### T-011: F-006 Demo 验证台功能闭环
+- **陷阱**：会议室回放若用 `confirmation` 节点展示「未出现确认」，会撞上 READ 案例禁止 confirmation 的骨架测试。超时回放标题「最终未知 · 无会议已创建」含子串「会议已创建」，不能当成功节点。
+- **经验**：列表读 `evaluation_cases` 表，回放 traces 来自 adapter 快照；GET 详情不得跑 approve / 写 meetings。中栏文案用 `evaluationRouteLabel` / `evaluationBadCaseLabel` 对齐原型，契约路由字符串仍是 `技能 create_meeting`。员工工作台只留场景条外链，不请求 evaluation_cases。
+- **避坑**：空列表是原型场景条 `#cases-empty` 的本地态，不要伪造通过率。回放只展示该案真实步骤的 `title_zh`。
+
+### T-012: 全系统 E2E 回归验证
+- **陷阱**：工作台 `.empty-hint` 与右栏「本轮尚无过程」同 class；`getByRole('button', { name: '对话' })` 会命中「新建对话」和标题含「对话」的会话。超时 banner「未确认会议已创建」含子串「会议已创建」，不能用 includes 当成功。POST `/turns` 返回后 `sending=false`，表格要等 GET hydrate 才进 `turnMap`。
+- **经验**：E2E 用 `.messages .empty-hint`、`.nav-item`、精确文案「会议已创建。」；发消息同时 `waitForResponse` GET `/turns/{id}`。启动文档写清 python3.12、`backend/.venv`、Agent 5199/8099 与验收 5175/8003；Vite 代理必须能被进程环境 `VITE_BACKEND_PROXY_TARGET` 覆盖。
+- **避坑**：超时对话不在侧栏前 20 条时用 `MEETING_TIMEOUT_DEMO_CONVERSATION_ID` 直达。不要为 E2E 改员工导航或加评测入口。
+

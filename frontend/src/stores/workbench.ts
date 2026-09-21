@@ -14,7 +14,6 @@ import type {
   TurnResponse,
 } from "@/types/api";
 import { TIMEOUT_CONVERSATION_ID } from "@/mocks/dto";
-import { isMockEnabled } from "@/utils/mockFlag";
 
 export const useWorkbenchStore = defineStore("workbench", () => {
   const identity = ref<IdentityResponse | null>(null);
@@ -62,15 +61,15 @@ export const useWorkbenchStore = defineStore("workbench", () => {
   }
 
   async function hydrateTurns(detail: ConversationDetailResponse): Promise<void> {
-    if (!isMockEnabled()) {
-      turnMap.value = {};
-      return;
-    }
     const ids = [...new Set(detail.turns.map((item) => item.turn_id))];
     const next: Record<string, TurnResponse> = {};
     await Promise.all(
       ids.map(async (turnId) => {
-        next[turnId] = await getTurn(detail.conversation_id, turnId);
+        try {
+          next[turnId] = await getTurn(detail.conversation_id, turnId);
+        } catch {
+          return;
+        }
       }),
     );
     turnMap.value = next;
@@ -173,12 +172,9 @@ export const useWorkbenchStore = defineStore("workbench", () => {
   async function keepReportEdit(draftId: string, content: string): Promise<void> {
     const turn = currentTurn.value;
     if (!turn || !current.value) return;
-    const saved = await saveReportDraft(current.value.conversation_id, turn.turn_id, draftId, content);
-    const existing = turnMap.value[turn.turn_id];
-    if (existing?.assistant_message.report_draft) {
-      existing.assistant_message.report_draft.content = saved.content;
-      existing.assistant_message.report_draft.is_edited = saved.is_edited;
-    }
+    await saveReportDraft(current.value.conversation_id, turn.turn_id, draftId, content);
+    const refreshed = await getTurn(current.value.conversation_id, turn.turn_id);
+    turnMap.value = { ...turnMap.value, [turn.turn_id]: refreshed };
   }
 
   async function loadScene(id: DemoSceneId): Promise<void> {

@@ -26,6 +26,13 @@ npm-debug.log*
 .idea/
 *.swp
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+frontend/playwright-report/
+frontend/test-results/
+
 # Build
 dist/
 build/
