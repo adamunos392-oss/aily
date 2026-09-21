@@ -1,6 +1,40 @@
 {
   "version": 1,
   "projects_root": "Projects_Repo",
-  "active_project_id": null,
-  "projects": []
+  "active_project_id": "aily",
+  "projects": [
+    {
+      "id": "service_robot",
+      "name": "智能客服系统",
+      "path": "Projects_Repo/service_robot",
+      "source": "new",
+      "repo_url": "git@github.com:adamunos392-oss/service.git",
+      "project_type": "web",
+      "status": "initialized",
+      "created_at": "2026-08-29 11:44:22",
+      "last_active": "2026-08-29 11:44:22"
+    },
+    {
+      "id": "ai_work_companion",
+      "name": "智能工作伙伴",
+      "path": "Projects_Repo/ai_work_companion",
+      "source": "new",
+      "repo_url": null,
+      "project_type": "web",
+      "status": "initialized",
+      "created_at": "2026-08-30 14:21:22",
+      "last_active": "2026-08-30 14:21:22"
+    },
+    {
+      "id": "aily",
+      "name": "Aily企业智能助手",
+      "path": "Projects_Repo/aily",
+      "source": "new",
+      "repo_url": "git@github.com:adamunos392-oss/aily.git",
+      "project_type": "web",
+      "status": "initialized",
+      "created_at": "2026-09-21 13:14:32",
+      "last_active": "2026-09-21 13:14:32"
+    }
+  ]
 }

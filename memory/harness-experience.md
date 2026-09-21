@@ -143,6 +143,20 @@
 - **经验**：`frontendIntegration.pages` 含 `/employee` 与 `/agent` 时，Developer 只把 EmployeePage 转人工接到真实 API，AgentPage 待接列表仍走 Mock，AC 要求坐席端看见新单无法在 `VITE_USE_MOCK=false` 下成立。
 - **规则**：Tester 必须逐页检查 `frontendIntegration.pages`；任一页默认仍走 Mock 则 FAIL。Developer 不得把对端页面推迟到后续任务，除非 tasks.json 明确 defer。
 
+## 2026-09-21｜过程/来源文案裁剪正则过宽破坏原型原文
+
+- **来源**：Aily企业智能助手 T-001 Tester 验证
+- **类型**：规范 / 对齐
+- **经验**：右栏过程/来源为对齐原型做了字符串裁剪，正则过宽导致条款号与「写入操作/只读查询」被破坏
+- **规则**：Why：原型文案中「只读/写入」既可能是独立 tag，也可能是短语组成部分；「第 N 条」中间含空格。How to apply：裁剪规则必须用锚点（句尾或「条」后描述）验证后再写；Tester 对相关来源/过程文案做逐字对照原型，不因「同源 citations」放过展示裁剪错误
+
+## 2026-09-21｜Vue Router hash 必须带 # 前缀
+
+- **来源**：Aily企业智能助手 T-002 Tester 验证
+- **类型**：信息对齐
+- **经验**：Vue Router 4 的 `hash` 必须带 `#` 前缀；漏写会导致 path 被污染，破坏原型 section 锚点
+- **规则**：Why：`router.replace({ hash: 'x' })` 不等于 `location.hash = 'x'`。How to apply：写原型场景条时一律 `hash: \`#${id}\``，Tester 用场景切换后检查 `location.pathname` 未变且 `location.hash` 正确。
+
 
 
 
