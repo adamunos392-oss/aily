@@ -12,3 +12,5 @@ export {
   mockApplyScene,
   resetMockDb,
 } from "@/mocks/engine";
+
+export { mockGetEvaluationCase, mockListEvaluationCases } from "@/mocks/evaluation";

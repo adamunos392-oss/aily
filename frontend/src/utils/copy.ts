@@ -1,3 +1,5 @@
+import type { BadCaseCategory } from "@/types/api";
+
 export const DEMO_SCENE_OPTIONS: Array<{ id: string; label: string }> = [
   { id: "empty", label: "空对话" },
   { id: "loading", label: "发送中" },
@@ -62,3 +64,27 @@ export const SHORTCUTS: Array<{
     entrySource: "shortcut_task",
   },
 ];
+
+export const EVALUATION_SCENE_OPTIONS: Array<{ id: string; label: string }> = [
+  { id: "cases", label: "案例列表" },
+  { id: "case-timeout", label: "选中超时案例" },
+  { id: "cases-empty", label: "列表空" },
+];
+
+const BAD_CASE_LABELS: Record<BadCaseCategory, string> = {
+  none: "无",
+  no_evidence_refusal: "无依据拒答",
+  timeout_unknown: "超时未知",
+  confirmation_invalidated: "确认失效",
+};
+
+export function evaluationBadCaseLabel(category: BadCaseCategory): string {
+  return BAD_CASE_LABELS[category];
+}
+
+export function evaluationRouteLabel(route: string): string {
+  if (route === "技能 create_meeting") return "创建会议技能";
+  if (route === "技能 create_meeting → 未知") return "创建会议技能 → 未知";
+  if (route === "技能 generate_work_report") return "生成工作周报技能";
+  return route;
+}

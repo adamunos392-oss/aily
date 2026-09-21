@@ -243,3 +243,51 @@ export type DemoSceneId =
   | "report"
   | "rooms"
   | "rooms-empty";
+
+export type EvaluationProtoSceneId = "cases" | "case-timeout" | "cases-empty";
+
+export type BadCaseCategory =
+  | "none"
+  | "no_evidence_refusal"
+  | "timeout_unknown"
+  | "confirmation_invalidated";
+
+export type EvaluationSceneId = "S-001" | "S-002" | "S-003" | "S-004" | "S-005" | "S-006" | "S-007";
+
+export interface EvaluationCaseSummary {
+  case_id: string;
+  name: string;
+  expected_route: string;
+  actual_route: string;
+  passed: boolean;
+  bad_case_category: BadCaseCategory;
+}
+
+export interface EvaluationCaseListResponse {
+  items: EvaluationCaseSummary[];
+  total: number;
+}
+
+export interface EvaluationCase {
+  case_id: string;
+  name: string;
+  scene_id: EvaluationSceneId;
+  query: string;
+  expected_route: string;
+  actual_route: string;
+  passed: boolean;
+  bad_case_category: BadCaseCategory;
+  trace_events: TraceEvent[];
+}
+
+export interface RouteComparison {
+  expected_route: string;
+  actual_route: string;
+  passed: boolean;
+}
+
+export interface EvaluationCaseDetailResponse {
+  case: EvaluationCase;
+  route_comparison: RouteComparison;
+  replay_note: string;
+}
