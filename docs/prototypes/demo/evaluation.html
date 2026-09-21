@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo Validation · 非产品功能</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../tokens.css" />
+</head>
+<body>
+  <div class="proto-bar">
+    <span>原型场景切换（非产品功能）</span>
+    <select id="sceneSelect">
+      <option value="cases">案例列表</option>
+      <option value="case-timeout">选中超时案例</option>
+      <option value="cases-empty">列表空</option>
+    </select>
+    <a href="../01-workbench.html" style="color:#fff;">返回员工工作台</a>
+  </div>
+  <div class="demo-banner">Demo Validation / 非产品功能 · 不是员工工作台，不出现在员工导航</div>
+  <div class="demo-page" id="page"></div>
+  <script>
+    const cases = [
+      { id: "qa", name: "差旅住宿标准", expected: "企业知识", actual: "企业知识", pass: true, cat: "无", events: ["问题改写", "意图识别", "路由到企业知识", "知识检索", "引用核验通过", "最终已回复"] },
+      { id: "refuse", name: "无依据问句拒答", expected: "企业知识-拒答", actual: "企业知识-拒答", pass: true, cat: "无依据拒答", events: ["知识检索未命中", "引用核验未通过", "最终已拒答"] },
+      { id: "meet", name: "创建项目复盘会", expected: "创建会议技能", actual: "创建会议技能", pass: true, cat: "无", events: ["风险与权限", "确认已同意", "结果核验成功"] },
+      { id: "timeout", name: "创建会议超时", expected: "创建会议技能 → 未知", actual: "创建会议技能 → 未知", pass: true, cat: "超时未知", events: ["确认已同意", "原子能力超时", "结果核验未知", "最终未知 · 无会议已创建"] },
+      { id: "stale", name: "改时间后重确认", expected: "确认作废后重确认", actual: "确认作废后重确认", pass: true, cat: "确认失效", events: ["旧确认已作废", "新确认待确认"] },
+      { id: "report", name: "生成本周周报", expected: "生成工作周报技能", actual: "生成工作周报技能", pass: true, cat: "无", events: ["取本周消息", "过滤闲聊", "输出可编辑周报"] },
+      { id: "rooms", name: "查询可用会议室", expected: "只读查询", actual: "只读查询", pass: true, cat: "无", events: ["只读查询", "未出现确认", "未创建会议"] }
+    ];
+
+    function render(mode, selectedId) {
+      document.getElementById("sceneSelect").value = mode === "empty" ? "cases-empty" : (selectedId === "timeout" ? "case-timeout" : "cases");
+      if (mode === "empty") {
+        document.getElementById("page").innerHTML = '<div class="empty-hint">暂无预置案例。不得伪造通过率。</div>';
+        return;
+      }
+      const selected = cases.find((c) => c.id === selectedId) || cases[0];
+      const rows = cases.map((c) => `
+        <tr class="${c.id === selected.id ? "selected" : ""}" data-id="${c.id}">
+          <td>${c.name}</td>
+          <td>${c.expected}</td>
+          <td>${c.actual}</td>
+          <td><span class="tag ${c.pass ? "tag-ok" : "tag-fail"}">${c.pass ? "通过" : "不通过"}</span></td>
+          <td>${c.cat}</td>
+        </tr>`).join("");
+      document.getElementById("page").innerHTML = `
+        <h2 style="font-family:var(--font-title);letter-spacing:var(--track-title);margin:0 0 8px;">案例验证台</h2>
+        <p class="brand-sub" style="margin:0 0 16px;">仅供面试演示核对路由。员工产品不包含本页。</p>
+        <table class="data-table">
+          <thead><tr><th>案例</th><th>预期路由</th><th>实际路由</th><th>结果</th><th>分类</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="room-grid" style="margin-top:24px;">
+          <div class="bubble-ai" style="max-width:none;">
+            <strong>路由对照</strong>
+            <p>预期：${selected.expected}<br/>实际：${selected.actual}</p>
+          </div>
+          <div class="bubble-ai" style="max-width:none;">
+            <strong>事件流回放</strong>
+            ${selected.events.map((e) => `<p>· ${e}</p>`).join("")}
+          </div>
+        </div>`;
+      document.querySelectorAll("tbody tr").forEach((tr) => {
+        tr.addEventListener("click", () => {
+          location.hash = tr.dataset.id === "timeout" ? "case-timeout" : "cases";
+          render("list", tr.dataset.id);
+        });
+      });
+    }
+
+    document.getElementById("sceneSelect").addEventListener("change", (e) => {
+      const v = e.target.value;
+      location.hash = v;
+      if (v === "cases-empty") render("empty");
+      else if (v === "case-timeout") render("list", "timeout");
+      else render("list", "qa");
+    });
+
+    const hash = (location.hash || "#cases").slice(1);
+    if (hash === "cases-empty") render("empty");
+    else if (hash === "case-timeout") render("list", "timeout");
+    else render("list", "qa");
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+backend/.venv/
+
+# Env secrets
+.env
+.env.local
+frontend/.env
+backend/.env
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Build
+dist/
+build/
+
+# SQLite local data
+backend/data/*.db
+backend/data/*.db-journal

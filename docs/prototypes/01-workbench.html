@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>对话工作台 · Aily 企业智能助手</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./tokens.css" />
+</head>
+<body>
+  <div class="proto-bar">
+    <span>原型场景切换（非产品功能）</span>
+    <select id="sceneSelect" aria-label="选择原型场景"></select>
+    <a href="./demo/evaluation.html" style="color:#fff;">打开 Demo 验证（非产品功能）</a>
+  </div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">Aily</span>
+      <span class="brand-sub">企业智能助手</span>
+    </div>
+    <input class="search-disabled" disabled value="" placeholder="搜索对话、文档或功能" />
+    <div class="identity">
+      <div class="avatar">林</div>
+      <div>
+        <div>林小北</div>
+        <div class="brand-sub">产品部</div>
+      </div>
+    </div>
+  </header>
+  <div class="shell">
+    <aside class="aside">
+      <a class="nav-item active" href="./01-workbench.html">对话</a>
+      <button class="btn-primary" id="btnNew" type="button">新建对话</button>
+      <div class="section-label">最近对话</div>
+      <button class="conv" data-scene="qa-success" type="button">公司的差旅住宿标准是什么？<small>今天 10:24</small></button>
+      <button class="conv" data-scene="meeting-confirm" type="button">帮我明天下午三点跟张明开项目复盘会<small>今天 09:49</small></button>
+      <button class="conv" data-scene="report" type="button">帮我生成本周周报<small>今天 09:12</small></button>
+      <button class="conv" data-scene="rooms" type="button">查询明天下午三点以后可用的会议室<small>今天 08:40</small></button>
+    </aside>
+    <section class="main">
+      <div class="shortcuts">
+        <button class="shortcut" data-scene="qa-success" type="button"><strong>知识问答</strong><span>查询企业知识</span></button>
+        <button class="shortcut" data-scene="meeting-disambiguate" type="button"><strong>创建会议</strong><span>安排日程会议</span></button>
+        <button class="shortcut" data-scene="report" type="button"><strong>生成周报</strong><span>一键生成周报</span></button>
+        <button class="shortcut" data-scene="rooms" type="button"><strong>查询信息</strong><span>查询可用会议室</span></button>
+        <button class="shortcut" data-scene="meeting-confirm" type="button"><strong>执行任务</strong><span>创建会议</span></button>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <textarea id="input" placeholder="请输入，或选择上方功能"></textarea>
+        <button class="btn-send" id="btnSend" type="button">发送</button>
+      </div>
+    </section>
+    <aside class="trace">
+      <div class="tabs">
+        <button class="tab active" id="tabProcess" type="button">过程</button>
+        <button class="tab" id="tabSource" type="button">相关来源</button>
+      </div>
+      <div class="trace-body" id="traceBody"></div>
+    </aside>
+  </div>
+  <script>
+    const scenes = {
+      empty: {
+        label: "空对话",
+        conv: null,
+        input: "",
+        messages: '<div class="empty-hint">新对话。从上方功能进入，或直接输入问题。</div>',
+        events: [],
+        sources: []
+      },
+      loading: {
+        label: "发送中",
+        conv: "qa-success",
+        input: "公司的差旅住宿标准是什么？",
+        messages: '<div class="bubble-user">公司的差旅住宿标准是什么？</div><div class="bubble-ai loading">正在处理本轮提问…</div>',
+        events: [{ t: "10:24:01", title: "问题改写", desc: "正在改写当前问题" }],
+        sources: []
+      },
+      "qa-success": {
+        label: "知识有据",
+        conv: "qa-success",
+        input: "",
+        messages: `
+          <div class="bubble-user">公司的差旅住宿标准是什么？</div>
+          <div class="bubble-ai">
+            根据企业差旅管理制度，为您查询到住宿标准：
+            <table class="table">
+              <thead><tr><th>职级</th><th>城市类型</th><th>住宿标准（人民币/晚）</th></tr></thead>
+              <tbody>
+                <tr><td>P1-P3</td><td>一线城市</td><td>≤ 800</td></tr>
+                <tr><td>P1-P3</td><td>其他城市</td><td>≤ 600</td></tr>
+                <tr><td>P4 及以上</td><td>一线城市</td><td>≤ 1,200</td></tr>
+              </tbody>
+            </table>
+            以上标准适用于公司正式员工的商务差旅，实际报销以发票和公司差旅制度为准。
+            <div class="cite">引用来源<br/>1. 《差旅管理制度（2024 版）》第 3.2 条 员工住宿标准 <a href="#" data-tab="source">打开文档</a><br/>2. 《费用报销规范》第 2.1 条 差旅费用报销要求 <a href="#" data-tab="source">打开文档</a></div>
+          </div>`,
+        events: [
+          { t: "10:24:01", title: "问题改写", desc: "原始问题：公司的差旅住宿标准是什么？<br/>改写后：查询公司差旅住宿标准 2024" },
+          { t: "10:24:01", title: "意图识别", desc: "意图：企业制度咨询　<span class='tag tag-read'>只读</span>" },
+          { t: "10:24:01", title: "路由", desc: "企业知识检索" },
+          { t: "10:24:02", title: "知识检索", desc: "命中 5 条相关文档，选用前 3 条" },
+          { t: "10:24:03", title: "引用核验", desc: "引用数量 2，核验通过" },
+          { t: "10:24:03", title: "最终结果", desc: "已回复 · 企业知识问答" }
+        ],
+        sources: [
+          "《差旅管理制度（2024 版）》第 3.2 条：一线城市 P1-P3 住宿标准不超过 800 元/晚。",
+          "《费用报销规范》第 2.1 条：差旅住宿以职级与城市类型对照表执行。"
+        ]
+      },
+      "qa-refuse": {
+        label: "知识拒答",
+        conv: "qa-success",
+        input: "",
+        messages: `
+          <div class="bubble-user">下季度期权行权价是多少？</div>
+          <div class="bubble-ai">
+            <div class="banner-refuse">未找到可靠企业知识依据，无法回答该问题。</div>
+            <p>以上内容基于公司内部知识。如有特殊情况请咨询行政部门。</p>
+          </div>`,
+        events: [
+          { t: "11:02:01", title: "问题改写", desc: "改写后：查询下季度期权行权价" },
+          { t: "11:02:01", title: "意图识别", desc: "意图：企业制度咨询　<span class='tag tag-read'>只读</span>" },
+          { t: "11:02:02", title: "路由", desc: "企业知识检索" },
+          { t: "11:02:02", title: "知识检索", desc: "未命中可引用条目" },
+          { t: "11:02:03", title: "引用核验", desc: "未通过" },
+          { t: "11:02:03", title: "最终结果", desc: "已拒答" }
+        ],
+        sources: []
+      },
+      "meeting-clarify": {
+        label: "会议缺槽澄清",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我跟张明开个会。</div>
+          <div class="bubble-ai">还需要补全会议时间。请问安排在哪一天、几点？</div>`,
+        events: [
+          { t: "09:49:01", title: "意图识别", desc: "意图：创建会议　<span class='tag tag-write'>写入</span>" },
+          { t: "09:49:01", title: "槽位填充", desc: "已填：参会人张明（未消歧）　缺失：时间、主题" },
+          { t: "09:49:02", title: "最终结果", desc: "待澄清" }
+        ],
+        sources: []
+      },
+      "meeting-disambiguate": {
+        label: "同名消歧",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我明天下午三点跟张明开一个项目复盘会。</div>
+          <div class="bubble-ai">
+            通讯录里有两位张明，请选择具体的人：
+            <div style="margin-top:12px;">
+              <button class="choice" data-scene="meeting-confirm" type="button">张明 · 产品部</button>
+              <button class="choice" data-scene="meeting-confirm" type="button">张明 · 财务部</button>
+            </div>
+          </div>`,
+        events: [
+          { t: "09:49:01", title: "意图识别", desc: "意图：创建会议　<span class='tag tag-write'>写入</span>" },
+          { t: "09:49:01", title: "槽位填充", desc: "时间已填，参会人存在同名" },
+          { t: "09:49:02", title: "技能", desc: "创建会议 · 等待选定人员" },
+          { t: "09:49:02", title: "最终结果", desc: "待澄清" }
+        ],
+        sources: []
+      },
+      "meeting-confirm": {
+        label: "会议待确认",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我明天下午三点跟张明开一个项目复盘会。</div>
+          <div class="bubble-ai">
+            <div class="confirm-card">
+              <strong>请确认创建会议</strong>
+              <p>时间：明天下午 15:00<br/>参会人：张明（产品部）、林小北<br/>主题：项目复盘会<br/>时长：60 分钟<br/>类型：线上会议</p>
+              <button class="btn-ok" data-scene="meeting-success" type="button">同意创建</button>
+              <button class="btn-ghost" data-scene="empty" type="button">取消</button>
+            </div>
+          </div>`,
+        events: [
+          { t: "09:50:01", title: "风险与权限", desc: "写入操作 · 当前身份林小北｜产品部" },
+          { t: "09:50:01", title: "技能", desc: "创建会议 · 编排找人、日历、会议" },
+          { t: "09:50:02", title: "确认", desc: "状态：待确认" },
+          { t: "09:50:02", title: "最终结果", desc: "待确认 · 尚未创建" }
+        ],
+        sources: []
+      },
+      "meeting-success": {
+        label: "会议已创建",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我明天下午三点跟张明开一个项目复盘会。</div>
+          <div class="bubble-ai">
+            <span class="tag tag-ok">核验成功</span>
+            <p>会议已创建。</p>
+            <p>时间：明天下午 15:00<br/>参会人：张明（产品部）、林小北<br/>主题：项目复盘会</p>
+          </div>`,
+        events: [
+          { t: "09:50:01", title: "风险与权限", desc: "写入操作" },
+          { t: "09:50:02", title: "确认", desc: "状态：已同意" },
+          { t: "09:50:03", title: "原子能力", desc: "找人成功 · 日历可写 · 会议已写入" },
+          { t: "09:50:04", title: "结果核验", desc: "成功" },
+          { t: "09:50:04", title: "最终结果", desc: "已回复 · 会议已创建" }
+        ],
+        sources: []
+      },
+      "meeting-timeout": {
+        label: "会议超时未知",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我明天下午三点跟张明开一个项目复盘会。</div>
+          <div class="bubble-ai">
+            <div class="banner-unknown">创建结果未知，需要核验。未确认会议已创建。</div>
+            <p>已确认的会议信息仍保留，但系统未在约定等待内得到确定成功。</p>
+          </div>`,
+        events: [
+          { t: "09:51:01", title: "确认", desc: "状态：已同意" },
+          { t: "09:51:02", title: "原子能力", desc: "创建会议超时" },
+          { t: "09:51:03", title: "结果核验", desc: "未知" },
+          { t: "09:51:03", title: "最终结果", desc: "未知 · 待核验" }
+        ],
+        sources: []
+      },
+      "meeting-stale": {
+        label: "确认作废重确认",
+        conv: "meeting-confirm",
+        input: "",
+        messages: `
+          <div class="bubble-user">改成明天下午两点吧。</div>
+          <div class="bubble-ai">
+            <div class="confirm-card stale"><strong>原确认已作废</strong><p>时间：14:00（旧）</p></div>
+            <div class="confirm-card" style="margin-top:12px;">
+              <strong>请重新确认</strong>
+              <p>时间：明天下午 15:00<br/>参会人：张明（产品部）、林小北<br/>主题：项目复盘会</p>
+              <button class="btn-ok" data-scene="meeting-success" type="button">同意新时间</button>
+            </div>
+          </div>`,
+        events: [
+          { t: "09:52:01", title: "槽位填充", desc: "会议时间由 14:00 改为 15:00" },
+          { t: "09:52:01", title: "确认", desc: "旧确认已作废" },
+          { t: "09:52:02", title: "确认", desc: "新确认：待确认" },
+          { t: "09:52:02", title: "最终结果", desc: "待确认" }
+        ],
+        sources: []
+      },
+      report: {
+        label: "周报可编辑",
+        conv: "report",
+        input: "",
+        messages: `
+          <div class="bubble-user">帮我生成本周周报。</div>
+          <div class="bubble-ai">
+            <p>已命中技能：生成工作周报。按固定步骤生成本周周报，事实来自本轮工作消息。</p>
+            <textarea class="report" id="reportBox">本周工作周报（林小北）
+1. 完成 Aily 工作台信息架构评审
+2. 与张明对齐项目复盘会材料</textarea>
+            <p class="brand-sub">闲聊未写入。修改后以你的编辑版为准。</p>
+            <button class="btn-ok" id="keepEdit" type="button">保留修改</button>
+          </div>`,
+        events: [
+          { t: "09:12:01", title: "路由", desc: "技能：生成工作周报" },
+          { t: "09:12:02", title: "技能", desc: "生成工作周报 · 套用简洁中文事项列表" },
+          { t: "09:12:02", title: "原子能力", desc: "已取本周工作消息" },
+          { t: "09:12:03", title: "最终结果", desc: "已回复 · 可编辑周报" }
+        ],
+        sources: []
+      },
+      rooms: {
+        label: "会议室有结果",
+        conv: "rooms",
+        input: "",
+        messages: `
+          <div class="bubble-user">查询明天下午 3 点以后可用的会议室</div>
+          <div class="bubble-ai">
+            <p>明天下午 15:00 以后可用的会议室：</p>
+            <div class="room-grid">
+              <div class="room-card"><strong>星河 3 号</strong><p>明天下午 15:00–18:00 空闲</p></div>
+              <div class="room-card"><strong>启航厅</strong><p>明天下午 15:00–16:30 空闲</p></div>
+            </div>
+          </div>`,
+        events: [
+          { t: "08:40:01", title: "意图识别", desc: "意图：查询会议室　<span class='tag tag-read'>只读</span>" },
+          { t: "08:40:02", title: "路由", desc: "只读查询" },
+          { t: "08:40:02", title: "原子能力", desc: "查询会议室成功" },
+          { t: "08:40:03", title: "最终结果", desc: "已回复 · 未创建会议" }
+        ],
+        sources: []
+      },
+      "rooms-empty": {
+        label: "会议室无可用",
+        conv: "rooms",
+        input: "",
+        messages: `
+          <div class="bubble-user">查询明天下午 3 点以后可用的会议室</div>
+          <div class="bubble-ai"><div class="banner-refuse">该时段没有可用会议室。</div></div>`,
+        events: [
+          { t: "08:41:01", title: "意图识别", desc: "意图：查询会议室　<span class='tag tag-read'>只读</span>" },
+          { t: "08:41:02", title: "原子能力", desc: "查询会议室 · 无空闲" },
+          { t: "08:41:03", title: "最终结果", desc: "已回复 · 未预订、未创建会议" }
+        ],
+        sources: []
+      }
+    };
+
+    const select = document.getElementById("sceneSelect");
+    const messages = document.getElementById("messages");
+    const traceBody = document.getElementById("traceBody");
+    const input = document.getElementById("input");
+    let currentTab = "process";
+    let currentId = "qa-success";
+
+    Object.entries(scenes).forEach(([id, s]) => {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = s.label;
+      select.appendChild(opt);
+    });
+
+    function renderTrace(scene) {
+      if (currentTab === "source") {
+        if (!scene.sources.length) {
+          traceBody.innerHTML = '<div class="empty-hint">本轮无知识来源</div>';
+          return;
+        }
+        traceBody.innerHTML = scene.sources.map((s, i) => `<p>${i + 1}. ${s}</p>`).join("");
+        return;
+      }
+      if (!scene.events.length) {
+        traceBody.innerHTML = '<div class="empty-hint">本轮尚无过程</div>';
+        return;
+      }
+      traceBody.innerHTML = scene.events.map((e) => `
+        <div class="event">
+          <span class="dot"></span>
+          <div><h4>${e.title}</h4><p>${e.desc}</p></div>
+          <span>${e.t}</span>
+        </div>`).join("");
+    }
+
+    function show(id) {
+      const scene = scenes[id] || scenes.empty;
+      currentId = id;
+      location.hash = id;
+      select.value = id;
+      messages.innerHTML = scene.messages;
+      input.value = scene.input;
+      document.querySelectorAll(".conv").forEach((el) => {
+        el.classList.toggle("active", el.dataset.scene === scene.conv);
+      });
+      document.getElementById("tabSource").classList.toggle("active", currentTab === "source");
+      document.getElementById("tabProcess").classList.toggle("active", currentTab === "process");
+      renderTrace(scene);
+    }
+
+    select.addEventListener("change", () => show(select.value));
+    document.getElementById("btnNew").addEventListener("click", () => show("empty"));
+    document.getElementById("tabProcess").addEventListener("click", () => { currentTab = "process"; show(currentId); });
+    document.getElementById("tabSource").addEventListener("click", () => { currentTab = "source"; show(currentId); });
+    document.body.addEventListener("click", (e) => {
+      const t = e.target.closest("[data-scene]");
+      if (t && t.dataset.scene) {
+        e.preventDefault();
+        show(t.dataset.scene);
+      }
+      if (e.target.dataset.tab === "source") {
+        e.preventDefault();
+        currentTab = "source";
+        show(currentId);
+      }
+    });
+    document.getElementById("btnSend").addEventListener("click", () => {
+      const text = input.value.trim();
+      if (text.includes("差旅")) show("qa-success");
+      else if (text.includes("期权")) show("qa-refuse");
+      else if (text.includes("周报")) show("report");
+      else if (text.includes("会议室")) show("rooms");
+      else if (text.includes("张明") || text.includes("开会")) show("meeting-disambiguate");
+      else show("loading");
+    });
+
+    show((location.hash || "#qa-success").slice(1));
+  </script>
+</body>
+</html>
