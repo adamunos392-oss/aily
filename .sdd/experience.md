@@ -33,3 +33,18 @@
 - **陷阱**：`section.replace(/ .+$/, "")` 从「第」后第一个空格切掉「3.2 条」；`summary.replace(/\u3000?只读|\u3000?写入/g, "")` 吃掉「写入操作」「只读查询」词内字，再叠标签变成「查询只读」。
 - **经验**：相关来源按原型拼 `document_title + 第 X.Y 条 + "：" + excerpt`，只去掉「条」后描述。过程摘要仅剥句尾 `\u3000(?:只读|写入)$`，只读/写入标签也只在该尾标存在时渲染，不按 `includes` / `payload.operation_type` 误标。
 - **避坑**：对齐原型的字符串裁剪必须带句尾或「条」锚点，先用原型原文自测再提交。本轮为首次返工，非连续同类失败；系统级经验已存在于 `memory/harness-experience.md`「2026-09-21｜过程/来源文案裁剪正则过宽破坏原型原文」，条目已覆盖 How to apply，无需新增回传。
+
+### T-003: 后端脚手架、配置与 Mock 身份
+- **陷阱**：pycore `ConfigManager` 默认只有 TOML loader，且 `load(..., use_env=True)` 会读进程环境；直接 `config.load(AppSettings, "backend/.env")` 会报 No loader。`Logger.configure` 必须在 `get_logger()` 之前，否则 session 模块级 logger 会用默认配置锁死。
+- **经验**：在项目 `core/config.py` 用 `DotEnvFileLoader`（`dotenv_values`，不读 `os.environ`）`register_loader` 后 `load(..., use_env=False)`。`main.py` 只用 `pycore.api.APIServer`；`GET /health` 来自 APIServer 内置，不必自建。`get_current_user` 返回 config 中的林小北｜产品部，无 JWT。业务表/Plugin/conversations API 留给后续任务。
+- **避坑**：质量门禁只跑 `backend/src` 与 `backend/tests`，不要 `ruff/mypy/pytest` 扫 `pycore/`。venv 用 `python3.12 -m venv backend/.venv`，命令统一 `python3.12`。`.env.example` 与 `.env` 键一一对应；VITE_* 留在 `frontend/.env`，不要混进后端。
+
+### T-004: SQLite 数据库模型与种子数据
+- **陷阱**：`cd backend && PYTHONPATH=.. python3.12 scripts/init_db.py` 时 `sys.path[0]` 是 `scripts/`，项目根只有 `pycore` 没有 `src`。测试若对运行时 `engine` 做 `drop_all` 会清掉 `backend/data/aily.db` 的 seed。
+- **经验**：脚本把 `backend/` 插入 `sys.path` 后用 `src.*` 导入。`create_all_tables(bind)` 与 `seed_database(session)` 接受外部引擎/会话，测试用 `tmp_path` 独立库。seed 按业务 ID upsert，可重复执行；超时演示对话只 upsert 那一行，不插 meetings。差旅限额/职级/城市写进 knowledge excerpt，拒答问句不得出现在 is_active 条目中。
+- **避坑**：质量门禁用 `backend/.venv/bin/python` 从项目根跑 ruff/mypy/pytest；mypy 必须带上项目 `pyproject.toml` 的 exclude，不要对 pycore 绝对路径做 mypy。真实库落盘后再跑 pytest，确认 12 张表和 seed 还在。
+
+### T-005: Agent PluginRegistry 与 Mock Adapter 基础设施
+- **陷阱**：`src.services.__init__` 若 re-export `AgentOrchestratorService`，会形成 `plugins.registry → plugins.nodes → services.agent_nodes → services.__init__ → agent_orchestrator → plugins.registry` 循环导入，TestClient 收集阶段即失败。
+- **经验**：Plugin 经 Service 调 Adapter；Orchestrator 只按固定名单 `execute`，不要用 `to_specs()` 做开放规划。READ 分支跳过 `risk_permission`，且 adapter/编排都不得追加 `confirmation` 节点。`register_agent_plugins` 必须幂等，否则多个 TestClient startup 会 PluginError。
+- **避坑**：质量门禁用 `backend/.venv/bin/python`；mypy 异构 Plugin 列表要标 `list[BasePlugin]`。静态检查「未引入开放规划」只扫 `import/from langgraph|langchain`，不要扫中文禁令注释。

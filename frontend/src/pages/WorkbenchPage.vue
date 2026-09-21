@@ -7,6 +7,7 @@ import WorkbenchSidebar from "@/components/WorkbenchSidebar.vue";
 import WorkbenchTopbar from "@/components/WorkbenchTopbar.vue";
 import { useWorkbenchStore } from "@/stores/workbench";
 import { SHORTCUTS } from "@/utils/copy";
+import { isMockEnabled } from "@/utils/mockFlag";
 import type { DemoSceneId } from "@/types/api";
 
 const store = useWorkbenchStore();
@@ -40,6 +41,7 @@ onMounted(() => {
 });
 
 function onSceneChange(id: DemoSceneId): void {
+  if (!isMockEnabled()) return;
   void store.loadScene(id);
 }
 
@@ -79,7 +81,7 @@ function onSend(): void {
             <template v-for="item in store.displayTurns" :key="`${item.role}-${item.turnId}`">
               <div v-if="item.role === 'user'" class="bubble-user">{{ item.content }}</div>
               <AssistantBubble
-                v-else
+                v-else-if="store.turnMap[item.turnId]"
                 :turn="store.turnMap[item.turnId]"
                 @choose="store.choosePerson($event)"
                 @approve="store.approveCurrent()"
@@ -87,6 +89,7 @@ function onSend(): void {
                 @open-source="store.traceTab = 'source'"
                 @keep-report="keepReport"
               />
+              <div v-else class="bubble-ai">{{ item.content }}</div>
             </template>
             <template v-if="store.sending">
               <div

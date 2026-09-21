@@ -14,6 +14,7 @@ import type {
   TurnResponse,
 } from "@/types/api";
 import { TIMEOUT_CONVERSATION_ID } from "@/mocks/dto";
+import { isMockEnabled } from "@/utils/mockFlag";
 
 export const useWorkbenchStore = defineStore("workbench", () => {
   const identity = ref<IdentityResponse | null>(null);
@@ -61,6 +62,10 @@ export const useWorkbenchStore = defineStore("workbench", () => {
   }
 
   async function hydrateTurns(detail: ConversationDetailResponse): Promise<void> {
+    if (!isMockEnabled()) {
+      turnMap.value = {};
+      return;
+    }
     const ids = [...new Set(detail.turns.map((item) => item.turn_id))];
     const next: Record<string, TurnResponse> = {};
     await Promise.all(

@@ -48,7 +48,9 @@ specification: default
 - 数据库：create_all + seed（知识、人员、会议室、工作消息、7 评测案例、超时演示对话）
 - 健康检查：pycore 默认
 - 认证：无登录；`deps.get_current_user` → Mock UserContext
-- Python：3.11+（开发机若仅 3.9 须先具备 3.11+）
+- Python：锁定 `python3.12`（禁止系统 `python3` 3.9.6）；虚拟环境 `backend/.venv`
+- 启动：`cd backend && PYTHONPATH=.. python3.12 -m uvicorn src.main:app --host 127.0.0.1 --port 8099`
+- 配置：`backend/.env`（字段名见 `backend/.env.example`）；SECRET_KEY 已占位配置，真实值只存在于 `.env`
 
 ## 5. 逐 Feature 纵向闭环阶段
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { DEMO_SCENE_OPTIONS } from "@/utils/copy";
+import { isMockEnabled } from "@/utils/mockFlag";
 import type { DemoSceneId } from "@/types/api";
 
 defineProps<{
@@ -9,6 +10,8 @@ defineProps<{
 const emit = defineEmits<{
   change: [id: DemoSceneId];
 }>();
+
+const mockEnabled = isMockEnabled();
 </script>
 
 <template>
@@ -17,6 +20,7 @@ const emit = defineEmits<{
     <select
       aria-label="选择原型场景"
       :value="sceneId"
+      :disabled="!mockEnabled"
       @change="emit('change', ($event.target as HTMLSelectElement).value as DemoSceneId)"
     >
       <option v-for="item in DEMO_SCENE_OPTIONS" :key="item.id" :value="item.id">

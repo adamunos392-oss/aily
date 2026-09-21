@@ -33,3 +33,10 @@ build/
 # SQLite local data
 backend/data/*.db
 backend/data/*.db-journal
+
+# Tooling caches / logs
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+logs/
+backend/logs/
