@@ -4,7 +4,8 @@ import { applyDemoScene, createConversation, getConversation, listConversations 
 import { approveConfirmation, cancelConfirmation } from "@/services/confirmation";
 import { getIdentity } from "@/services/identity";
 import { saveReportDraft } from "@/services/report";
-import { createTurn, getTurn } from "@/services/turn";
+import { createTurn, getTurn, updateSlots } from "@/services/turn";
+import { nextDemoMeetingTime } from "@/utils/copy";
 import type {
   ConversationDetailResponse,
   ConversationSummary,
@@ -42,14 +43,29 @@ export const useWorkbenchStore = defineStore("workbench", () => {
   });
 
   const displayTurns = computed(() => {
-    const ordered: Array<{ turnId: string; role: "user" | "assistant"; content: string }> = [];
+    const ordered: Array<{
+      turnId: string;
+      role: "user" | "assistant";
+      content: string;
+      createdAt: string;
+    }> = [];
     const seenAssistant = new Set<string>();
     for (const item of current.value?.turns ?? []) {
       if (item.role === "user") {
-        ordered.push({ turnId: item.turn_id, role: "user", content: item.content });
+        ordered.push({
+          turnId: item.turn_id,
+          role: "user",
+          content: item.content,
+          createdAt: item.created_at,
+        });
       } else if (!seenAssistant.has(item.turn_id)) {
         seenAssistant.add(item.turn_id);
-        ordered.push({ turnId: item.turn_id, role: "assistant", content: item.content });
+        ordered.push({
+          turnId: item.turn_id,
+          role: "assistant",
+          content: item.content,
+          createdAt: item.created_at,
+        });
       }
     }
     return ordered;
@@ -177,6 +193,16 @@ export const useWorkbenchStore = defineStore("workbench", () => {
     turnMap.value = { ...turnMap.value, [turn.turn_id]: refreshed };
   }
 
+  async function changeCurrentMeetingTime(): Promise<void> {
+    const turn = currentTurn.value;
+    const confirmation = turn?.assistant_message.confirmation;
+    if (!turn || !confirmation || !current.value) return;
+    const next = await updateSlots(current.value.conversation_id, turn.turn_id, {
+      updates: { meeting_time: nextDemoMeetingTime(confirmation.meeting_time) },
+    });
+    await applyTurn(next);
+  }
+
   async function loadScene(id: DemoSceneId): Promise<void> {
     const result = await applyDemoScene(id);
     sceneId.value = result.sceneId;
@@ -221,6 +247,7 @@ export const useWorkbenchStore = defineStore("workbench", () => {
     approveCurrent,
     cancelCurrent,
     keepReportEdit,
+    changeCurrentMeetingTime,
     loadScene,
     isConversationActive,
   };

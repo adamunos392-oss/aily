@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import DemoControl from "@/components/DemoControl.vue";
 import { useEvaluationStore } from "@/stores/evaluation";
 import {
   EVALUATION_SCENE_OPTIONS,
@@ -29,10 +30,10 @@ function setHash(scene: EvaluationProtoSceneId): void {
   void router.replace({ hash: `#${scene}` });
 }
 
-function onSceneChange(event: Event): void {
-  const scene = (event.target as HTMLSelectElement).value as EvaluationProtoSceneId;
-  setHash(scene);
-  void store.applyScene(scene);
+function onSceneChange(scene: string): void {
+  const next = scene as EvaluationProtoSceneId;
+  setHash(next);
+  void store.applyScene(next);
 }
 
 function onRowActivate(item: EvaluationCaseSummary): void {
@@ -64,16 +65,23 @@ watch(
 </script>
 
 <template>
-  <div>
-    <div class="proto-bar">
-      <span>原型场景切换（非产品功能）</span>
-      <select aria-label="选择原型场景" :value="store.protoScene" @change="onSceneChange">
-        <option v-for="item in EVALUATION_SCENE_OPTIONS" :key="item.id" :value="item.id">
-          {{ item.label }}
-        </option>
-      </select>
-      <a href="/">返回员工工作台</a>
-    </div>
+  <div class="demo-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-name">Aily</span>
+        <span class="brand-sub">案例验证台</span>
+      </div>
+      <div class="topbar-right">
+        <span class="env-badge">Demo Environment · Mock Data</span>
+        <DemoControl
+          :scene-id="store.protoScene"
+          :options="EVALUATION_SCENE_OPTIONS"
+          link-href="/"
+          link-label="返回员工工作台"
+          @change="onSceneChange"
+        />
+      </div>
+    </header>
     <div class="demo-banner">Demo Validation / 非产品功能 · 不是员工工作台，不出现在员工导航</div>
     <div class="demo-page">
       <div v-if="isEmpty" class="empty-hint">暂无预置案例。不得伪造通过率。</div>

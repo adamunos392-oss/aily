@@ -26,6 +26,8 @@ test.describe("工作台 S-001～S-007", () => {
     });
     await openWorkbench(page);
     await assertNoEvalNav(page);
+    await expect(page.getByText("Demo Environment · Mock Data")).toBeVisible();
+    await page.getByRole("button", { name: "Demo", exact: true }).click();
     await expect(page.getByRole("link", { name: "打开 Demo 验证（非产品功能）" })).toBeVisible();
     expect(evalHits).toEqual([]);
   });
@@ -64,7 +66,7 @@ test.describe("工作台 S-001～S-007", () => {
     await expect(successCreatedLocator(page)).toHaveCount(0);
 
     await chooseProductZhang(page);
-    await expect(page.locator(".main").getByText("请确认创建会议")).toBeVisible();
+    await expect(page.locator(".main").getByText("请确认会议信息")).toBeVisible();
     await expect(page.locator(".confirm-card").getByText("明天下午 15:00")).toBeVisible();
     await expect(successCreatedLocator(page)).toHaveCount(0);
 
@@ -101,7 +103,7 @@ test.describe("工作台 S-001～S-007", () => {
     await expect(page.locator(".bubble-user").filter({ hasText: ROOMS_QUERY })).toBeVisible();
     await expect(page.locator(".room-card").filter({ hasText: "星河 3 号" })).toBeVisible();
     await expect(page.locator(".room-card").filter({ hasText: "启航厅" })).toBeVisible();
-    await expect(page.locator(".main").getByText("请确认创建会议")).toHaveCount(0);
+    await expect(page.locator(".main").getByText("请确认会议信息")).toHaveCount(0);
     await expect(successCreatedLocator(page)).toHaveCount(0);
   });
 
@@ -111,7 +113,7 @@ test.describe("工作台 S-001～S-007", () => {
     await page.reload();
     await expect(page.locator(".identity")).toContainText("林小北");
     await page.locator(".conv").first().click();
-    await expect(page.getByRole("button", { name: /同意创建|同意新时间/ })).toBeVisible({
+    await expect(page.getByRole("button", { name: /确认创建|同意新时间/ })).toBeVisible({
       timeout: 30_000,
     });
     await approveCurrent(page);
@@ -125,13 +127,15 @@ test.describe("工作台 S-001～S-007", () => {
     await createNewConversation(page);
     await sendComposer(page, MEETING_QUERY_TWO);
     await chooseProductZhang(page);
-    await expect(page.locator(".main").getByText("请确认创建会议")).toBeVisible();
+    await expect(page.locator(".main").getByText("请确认会议信息")).toBeVisible();
     await expect(page.locator(".confirm-card").getByText("明天下午 14:00")).toBeVisible();
 
-    await sendComposer(page, MEETING_QUERY);
-    if (await page.getByRole("button", { name: "张明 · 产品部" }).count()) {
-      await chooseProductZhang(page);
-    }
+    const pending = page.waitForResponse(
+      (response) =>
+        response.request().method() === "PATCH" && response.url().includes("/slots"),
+    );
+    await page.getByRole("button", { name: "修改" }).click();
+    expect((await pending).ok()).toBeTruthy();
     await expect(page.locator(".confirm-card.stale")).toContainText("原确认已作废");
     await expect(page.locator(".confirm-card").filter({ hasText: "请重新确认" })).toContainText("明天下午 15:00");
     await expect(successCreatedLocator(page)).toHaveCount(0);

@@ -31,6 +31,7 @@ test("S-008 Demo 验证台列表与超时回放", async ({ page }) => {
   await expect(page.locator(".demo-card").getByText("核验成功")).toHaveCount(0);
   await expect(page.getByText("会议已创建。", { exact: true })).toHaveCount(0);
 
+  await page.getByRole("button", { name: "Demo", exact: true }).click();
   await page.getByRole("link", { name: "返回员工工作台" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator(".nav-item")).toHaveText("对话");

@@ -11,6 +11,7 @@ const emit = defineEmits<{
   choose: [choiceId: string];
   approve: [];
   cancel: [];
+  modify: [];
   openSource: [];
   keepReport: [draftId: string, content: string];
 }>();
@@ -44,14 +45,14 @@ const staleEvent = computed<TraceEvent | undefined>(() =>
 );
 
 function attendeeLine(confirmation: ConfirmationSummary): string {
-  return confirmation.attendees.join("、");
+  return `${confirmation.attendees.join("、")}（共${confirmation.attendees.length}人）`;
 }
 </script>
 
 <template>
-  <div v-if="turn" class="bubble-ai">
+  <div v-if="turn" class="bubble-ai result-card">
     <template v-if="turn.assistant_message.message_type === 'knowledge_table'">
-      <div>{{ introText }}</div>
+      <p class="result-lead">{{ introText || "根据企业知识库，找到以下相关资料：" }}</p>
       <table class="table">
         <thead>
           <tr>
@@ -70,12 +71,14 @@ function attendeeLine(confirmation: ConfirmationSummary): string {
       </table>
       <div v-if="restText">{{ restText }}</div>
       <div v-if="turn.citations.length" class="cite">
-        引用来源<br />
-        <template v-for="(cite, index) in turn.citations" :key="cite.knowledge_entry_id">
-          {{ index + 1 }}. {{ cite.document_title }}{{ cite.section }}
-          <button class="cite-link" type="button" @click="emit('openSource')">打开文档</button>
-          <br />
-        </template>
+        <div class="cite-title">引用来源</div>
+        <div class="cite-grid">
+          <div v-for="cite in turn.citations" :key="cite.knowledge_entry_id" class="cite-card">
+            <strong>{{ cite.document_title }}</strong>
+            <p>{{ cite.section }}</p>
+            <button class="cite-link" type="button" @click="emit('openSource')">打开文档</button>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -104,49 +107,101 @@ function attendeeLine(confirmation: ConfirmationSummary): string {
     </template>
 
     <template v-else-if="turn.assistant_message.message_type === 'confirmation'">
+      <p class="result-lead">
+        {{ turn.assistant_message.text || "我已识别到你想创建会议。请确认以下信息，如需修改可以直接告诉我。" }}
+      </p>
       <div v-if="staleEvent" class="confirm-card stale">
         <strong>原确认已作废</strong>
         <p>时间：{{ String(staleEvent.payload.meeting_time ?? "14:00") }}（旧）</p>
       </div>
       <div v-if="turn.assistant_message.confirmation" class="confirm-card">
-        <strong>{{ staleEvent ? "请重新确认" : "请确认创建会议" }}</strong>
-        <p>
-          时间：{{ turn.assistant_message.confirmation.meeting_time }}<br />
-          参会人：{{ attendeeLine(turn.assistant_message.confirmation) }}<br />
-          主题：{{ turn.assistant_message.confirmation.topic }}<br />
-          <template v-if="!staleEvent">
-            时长：{{ turn.assistant_message.confirmation.duration_minutes }} 分钟<br />
-            类型：{{ formatMeetingType(turn.assistant_message.confirmation.meeting_type) }}
-          </template>
-        </p>
-        <button class="btn-ok" type="button" @click="emit('approve')">
-          {{ staleEvent ? "同意新时间" : "同意创建" }}
-        </button>
-        <button v-if="!staleEvent" class="btn-ghost" type="button" @click="emit('cancel')">取消</button>
+        <div class="confirm-head">
+          <strong>{{ staleEvent ? "请重新确认" : "请确认会议信息" }}</strong>
+          <span class="tag tag-warn">待确认</span>
+        </div>
+        <dl class="confirm-fields">
+          <div>
+            <dt>会议主题</dt>
+            <dd>{{ turn.assistant_message.confirmation.topic }}</dd>
+          </div>
+          <div>
+            <dt>时间</dt>
+            <dd>{{ turn.assistant_message.confirmation.meeting_time }}</dd>
+          </div>
+          <div>
+            <dt>参会人</dt>
+            <dd>{{ attendeeLine(turn.assistant_message.confirmation) }}</dd>
+          </div>
+          <div>
+            <dt>时长</dt>
+            <dd>{{ turn.assistant_message.confirmation.duration_minutes }} 分钟</dd>
+          </div>
+          <div>
+            <dt>会议类型</dt>
+            <dd>{{ formatMeetingType(turn.assistant_message.confirmation.meeting_type) }}</dd>
+          </div>
+        </dl>
+        <div class="confirm-actions">
+          <button class="btn-ok" type="button" @click="emit('approve')">
+            {{ staleEvent ? "同意新时间" : "确认创建" }}
+          </button>
+          <button class="btn-ghost" type="button" @click="emit('modify')">修改</button>
+          <button v-if="!staleEvent" class="btn-ghost" type="button" @click="emit('cancel')">取消</button>
+        </div>
       </div>
     </template>
 
     <template v-else-if="turn.assistant_message.message_type === 'meeting_success'">
-      <span class="tag tag-ok">核验成功</span>
-      <p>会议已创建。</p>
-      <p>
-        时间：{{ turn.assistant_message.confirmation?.meeting_time ?? "明天下午 15:00" }}<br />
-        参会人：{{
-          turn.assistant_message.confirmation
-            ? attendeeLine(turn.assistant_message.confirmation)
-            : "张明（产品部）、林小北"
-        }}<br />
-        主题：{{ turn.assistant_message.confirmation?.topic ?? "项目复盘会" }}
-      </p>
+      <div class="result-card-success">
+        <div class="result-kicker">
+          <span class="tag tag-ok">核验成功</span>
+          会议已创建成功
+        </div>
+        <p>
+          已为你创建「{{ turn.assistant_message.confirmation?.topic ?? "项目复盘会" }}」，并已邀请
+          {{
+            turn.assistant_message.confirmation
+              ? attendeeLine(turn.assistant_message.confirmation)
+              : "张明（产品部）、林小北"
+          }}。
+        </p>
+        <p>会议已创建。</p>
+        <dl class="confirm-fields">
+          <div>
+            <dt>时间</dt>
+            <dd>{{ turn.assistant_message.confirmation?.meeting_time ?? "明天下午 15:00" }}</dd>
+          </div>
+          <div>
+            <dt>参会人</dt>
+            <dd>
+              {{
+                turn.assistant_message.confirmation
+                  ? attendeeLine(turn.assistant_message.confirmation)
+                  : "张明（产品部）、林小北"
+              }}
+            </dd>
+          </div>
+          <div>
+            <dt>主题</dt>
+            <dd>{{ turn.assistant_message.confirmation?.topic ?? "项目复盘会" }}</dd>
+          </div>
+        </dl>
+      </div>
     </template>
 
     <template v-else-if="turn.assistant_message.message_type === 'meeting_unknown'">
-      <div class="banner-unknown">创建结果未知，需要核验。未确认会议已创建。</div>
-      <p>{{ turn.assistant_message.text }}</p>
+      <div class="result-card-unknown">
+        <div class="result-kicker">
+          <span class="tag tag-fail">未知</span>
+          创建结果未知
+        </div>
+        <div class="banner-unknown">创建结果未知，需要核验。未确认会议已创建。</div>
+        <p>{{ turn.assistant_message.text }}</p>
+      </div>
     </template>
 
     <template v-else-if="turn.assistant_message.message_type === 'report_draft'">
-      <p>{{ turn.assistant_message.text }}</p>
+      <p class="result-lead">{{ turn.assistant_message.text }}</p>
       <textarea v-model="reportText" class="report" />
       <p class="brand-sub">闲聊未写入。修改后以你的编辑版为准。</p>
       <button
@@ -167,7 +222,7 @@ function attendeeLine(confirmation: ConfirmationSummary): string {
         {{ turn.assistant_message.text }}
       </div>
       <template v-else>
-        <p>{{ turn.assistant_message.text }}</p>
+        <p class="result-lead">{{ turn.assistant_message.text }}</p>
         <div class="room-grid">
           <div
             v-for="room in turn.assistant_message.rooms ?? []"

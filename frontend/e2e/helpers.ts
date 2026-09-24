@@ -28,6 +28,7 @@ export async function openWorkbench(page: Page): Promise<void> {
   await expect(page.locator(".nav-item")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "评测与案例", exact: true })).toHaveCount(0);
   await expect(page.locator("body")).not.toContainText("[Mock]");
+  await expect(page.getByText("原型场景切换（非产品功能）")).toHaveCount(0);
 }
 
 export async function createNewConversation(page: Page): Promise<string> {
@@ -94,7 +95,7 @@ export async function approveCurrent(page: Page): Promise<Response> {
       response.request().method() === "POST" && response.url().includes("/approve"),
     { timeout: 60_000 },
   );
-  await page.getByRole("button", { name: /同意创建|同意新时间/ }).click();
+  await page.getByRole("button", { name: /确认创建|同意新时间/ }).click();
   const response = await pending;
   expect(response.ok()).toBeTruthy();
   await hydrated;
@@ -108,6 +109,7 @@ export function successCreatedLocator(page: Page) {
 
 export async function assertNoEvalNav(page: Page): Promise<void> {
   await expect(page.locator(".nav-item")).toHaveText("对话");
+  await expect(page.locator(".nav-item")).toHaveCount(1);
   await expect(page.locator(".aside")).not.toContainText("评测");
   await expect(page.locator(".main")).not.toContainText("预期路由");
   await expect(page.locator(".main")).not.toContainText("Bad Case");

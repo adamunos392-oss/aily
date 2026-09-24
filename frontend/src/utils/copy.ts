@@ -1,4 +1,4 @@
-import type { BadCaseCategory } from "@/types/api";
+import type { BadCaseCategory, RouteType, TraceEvent, TraceNode } from "@/types/api";
 
 export const DEMO_SCENE_OPTIONS: Array<{ id: string; label: string }> = [
   { id: "empty", label: "空对话" },
@@ -87,4 +87,92 @@ export function evaluationRouteLabel(route: string): string {
   if (route === "技能 create_meeting → 未知") return "创建会议技能 → 未知";
   if (route === "技能 generate_work_report") return "生成工作周报技能";
   return route;
+}
+
+export type ConversationSceneTag = "RAG" | "Skill" | "Tool";
+
+export function conversationSceneTag(
+  preview: string | null,
+  title: string,
+  routeType: RouteType | null,
+): ConversationSceneTag | null {
+  if (routeType === "RAG") return "RAG";
+  if (routeType === "SKILL") return "Skill";
+  if (routeType === "READ_TOOL") return "Tool";
+  const text = `${preview ?? ""} ${title}`;
+  if (text.includes("会议室")) return "Tool";
+  if (text.includes("周报") || text.includes("开会") || text.includes("会议")) return "Skill";
+  if (text.includes("差旅") || text.includes("上市") || text.includes("期权")) return "RAG";
+  return null;
+}
+
+export type TraceKindTag =
+  | "RAG"
+  | "INTENT"
+  | "SLOT"
+  | "SKILL"
+  | "CHECK"
+  | "CONFIRM"
+  | "TOOL"
+  | "VERIFY"
+  | "READ"
+  | "WRITE"
+  | "SUCCESS"
+  | "UNKNOWN";
+
+const NODE_TAGS: Partial<Record<TraceNode, TraceKindTag>> = {
+  query_rewrite: "RAG",
+  intent: "INTENT",
+  slot_fill: "SLOT",
+  risk_permission: "CHECK",
+  rag_retrieve: "RAG",
+  citation_validate: "RAG",
+  skill: "SKILL",
+  confirmation: "CONFIRM",
+  result_validate: "VERIFY",
+};
+
+export function traceKindTag(event: TraceEvent): TraceKindTag | null {
+  const fromNode = NODE_TAGS[event.node];
+  if (fromNode) return fromNode;
+  if (event.node === "result_validate" || event.node === "final") {
+    const blob = `${event.summary} ${event.title_zh} ${JSON.stringify(event.payload)}`;
+    if (blob.includes("未知")) return "UNKNOWN";
+    if (blob.includes("成功") || blob.includes("已回复") || blob.includes("已创建")) return "SUCCESS";
+    if (event.node === "result_validate") return "VERIFY";
+    return null;
+  }
+  if (event.node === "tool_call") {
+    return "TOOL";
+  }
+  if (event.node === "router") {
+    const target = String(event.payload.target ?? event.payload.route_type ?? "");
+    if (target.includes("RAG") || event.summary.includes("知识")) return "RAG";
+    if (target.includes("SKILL") || event.summary.includes("技能")) return "SKILL";
+    return "TOOL";
+  }
+  if (event.summary.endsWith("\u3000写入")) return "WRITE";
+  if (event.summary.endsWith("\u3000只读")) return "READ";
+  return null;
+}
+
+export function traceStatusLabel(event: TraceEvent): string {
+  const status = event.payload.status;
+  if (typeof status === "string" && status.trim()) {
+    if (status === "pending") return "待确认";
+    if (status === "approved") return "已同意";
+    if (status === "invalidated") return "已作废";
+    if (status === "cancelled") return "已取消";
+    if (status === "success") return "成功";
+    if (status === "unknown" || status === "timeout") return "未知";
+    if (status === "refused") return "拒答";
+    return status;
+  }
+  if (event.node === "final") return event.title_zh.replace(/^最终/, "") || "完成";
+  return "已执行";
+}
+
+export function nextDemoMeetingTime(current: string): string {
+  if (current.includes("14:00") || current.includes("两点")) return "明天下午三点";
+  return "明天下午两点";
 }
