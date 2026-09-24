@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DemoControl from "@/components/DemoControl.vue";
+import { withBase } from "@/utils/baseUrl";
 import { useEvaluationStore } from "@/stores/evaluation";
 import {
   EVALUATION_SCENE_OPTIONS,
@@ -76,7 +77,7 @@ watch(
         <DemoControl
           :scene-id="store.protoScene"
           :options="EVALUATION_SCENE_OPTIONS"
-          link-href="/"
+          :link-href="withBase()"
           link-label="返回员工工作台"
           @change="onSceneChange"
         />

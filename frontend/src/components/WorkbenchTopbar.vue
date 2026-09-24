@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DemoControl from "@/components/DemoControl.vue";
 import type { IdentityResponse } from "@/types/api";
+import { withBase } from "@/utils/baseUrl";
 import { DEMO_SCENE_OPTIONS } from "@/utils/copy";
 import { isMockEnabled } from "@/utils/mockFlag";
 
@@ -27,7 +28,7 @@ const emit = defineEmits<{
         :scene-id="sceneId"
         :options="DEMO_SCENE_OPTIONS"
         :scene-disabled="!isMockEnabled()"
-        link-href="/demo/evaluation"
+        :link-href="withBase('demo/evaluation')"
         link-label="打开 Demo 验证（非产品功能）"
         @change="emit('scene', $event)"
       />

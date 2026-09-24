@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit -p tsconfig.app.json && vite build",
+    "build:pages": "GITHUB_PAGES=true VITE_USE_MOCK=true vite build && cp ../docs/app/index.html ../docs/app/404.html && cp ../docs/app/index.html ../docs/404.html",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json",
     "lint": "eslint src --max-warnings 0",
